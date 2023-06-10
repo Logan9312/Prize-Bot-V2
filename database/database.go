@@ -60,15 +60,26 @@ func GetAuctionSettings(guildID string) (AuctionSetup, error) {
 
 	result := DB.First(&auctionSettings, guildID)
 
+	//TODO Test if this still works before fetching data
 	if auctionSettings.ChannelPrefix == nil {
 		auctionSettings.ChannelPrefix = Ptr("💸│")
 	}
-
 	if result.Error != nil {
 		return auctionSettings, fmt.Errorf("Error getting auction settings: %w", result.Error)
 	}
 
 	return auctionSettings, nil
+}
+
+func GetAuctionData(channelID string) (Auction, error) {
+	auction := Auction{}
+
+	result := DB.Preload("Event").Where("event.channel_id = ?", channelID).First(&auction)
+	if result.Error != nil {
+		return auction, fmt.Errorf("Error getting auction settings: %w", result.Error)
+	}
+
+	return auction, nil
 }
 
 func Ptr[T any](v T) *T {

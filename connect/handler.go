@@ -13,8 +13,8 @@ import (
 // Move these to commands package
 var commandMap = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate) error{
 	"auction": c.Auction,
-	/*"bid":            c.AuctionBid,
-	"profile":        c.Profile,
+	"bid":     c.AuctionBid,
+	/*"profile":        c.Profile,
 	"giveaway":       c.Giveaway,
 	"shop":           c.Shop,
 	"claim":          c.Claim,
