@@ -19,4 +19,4 @@ RUN go build -o ./main .
 
 
 # Run the app
-CMD ["/main"]
+CMD ["go run ."]
