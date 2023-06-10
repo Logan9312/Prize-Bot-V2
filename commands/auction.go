@@ -6,8 +6,7 @@ import (
 
 	"github.com/Logan9312/Prize-Bot-V2/database"
 	"github.com/Logan9312/Prize-Bot-V2/events"
-	. "github.com/Logan9312/Prize-Bot-V2/helpers"
-	. "github.com/Logan9312/Prize-Bot-V2/models"
+	h "github.com/Logan9312/Prize-Bot-V2/helpers"
 	r "github.com/Logan9312/Prize-Bot-V2/responses"
 	"github.com/bwmarrin/discordgo"
 )
@@ -71,7 +70,6 @@ var AuctionCommand = discordgo.ApplicationCommand{
 				CommandOptionItem,
 				CommandOptionHost,
 				CommandOptionBid,
-				CommandOptionHost,
 				CommandOptionWinner,
 				CommandOptionExtend,
 				CommandOptionDescription,
@@ -108,7 +106,7 @@ func Auction(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 	case "edit":
 		//return AuctionEdit(s, i)
 	}
-	return fmt.Errorf("Unknown Auction command, please contact support")
+	return fmt.Errorf("unknown Auction command, please contact support")
 }
 
 func SaveAuction(auction database.Auction) error {
@@ -116,12 +114,8 @@ func SaveAuction(auction database.Auction) error {
 	return database.DB.Save(&auction).Error
 }
 
-func getAuctionSettings() {
-
-}
-
 func AuctionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) error {
-	options := ParseCommand(i)
+	options := h.ParseCommand(i)
 	errors := []string{}
 
 	//Splits the auction names
@@ -132,12 +126,12 @@ func AuctionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 	}
 
 	if len(auctions) > 100 {
-		return fmt.Errorf("You can only start 100 auctions in bulk at once. You attempted to start: %d.", len(auctions))
+		return fmt.Errorf("you can only start 100 auctions in bulk at once. You attempted to start: %d", len(auctions))
 	}
 
 	auctionData, err := SetAuctionData(s, i, options)
 	if err != nil {
-		return fmt.Errorf("Error setting auction data: %w", err)
+		return fmt.Errorf("error setting auction data: %w", err)
 	}
 
 	//TODO Optimize selecting multiple auctions
@@ -168,7 +162,7 @@ func AuctionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 		}
 	}
 	if len(errors) > 0 {
-		return fmt.Errorf("One or more auctions failed to start:\n%s", strings.Join(errors, "\n"))
+		return fmt.Errorf("one or more auctions failed to start:\n%s", strings.Join(errors, "\n"))
 	}
 	return nil
 }
@@ -191,19 +185,19 @@ func SetAuctionData(s *discordgo.Session, i *discordgo.InteractionCreate, data m
 	}
 
 	if data["increment_min"] != nil {
-		auctionData.IncrementMin = Ptr(data["increment_min"].(float64))
+		auctionData.IncrementMin = h.Ptr(data["increment_min"].(float64))
 	}
 
 	if data["increment_max"] != nil {
-		auctionData.IncrementMax = Ptr(data["increment_max"].(float64))
+		auctionData.IncrementMax = h.Ptr(data["increment_max"].(float64))
 	}
 
 	if data["target_price"] != nil {
-		auctionData.TargetPrice = Ptr(data["target_price"].(float64))
+		auctionData.TargetPrice = h.Ptr(data["target_price"].(float64))
 	}
 
 	if data["buyout"] != nil {
-		auctionData.Buyout = Ptr(data["buyout"].(float64))
+		auctionData.Buyout = h.Ptr(data["buyout"].(float64))
 	}
 
 	if data["integer_only"] != nil {
@@ -211,7 +205,7 @@ func SetAuctionData(s *discordgo.Session, i *discordgo.InteractionCreate, data m
 	}
 
 	if data["channel_lock"] != nil {
-		auctionData.ChannelLock = Ptr(data["channel_lock"].(bool))
+		auctionData.ChannelLock = h.Ptr(data["channel_lock"].(bool))
 	}
 
 	return auctionData, nil
@@ -277,7 +271,7 @@ func AuctionStart(s *discordgo.Session, data database.Auction) (string, error) {
 
 	err = SaveAuction(data)
 	if err != nil {
-		return *data.Event.ChannelID, fmt.Errorf("Error saving auction to database, auction will not work: %w", result.Error)
+		return *data.Event.ChannelID, fmt.Errorf("error saving auction to database, auction will not work: %w", result.Error)
 	}
 
 	return *data.Event.ChannelID, nil
@@ -287,11 +281,11 @@ func AuctionMessageFormat(data database.Auction) discordgo.MessageSend {
 	message := events.MessageFormat(data.Event)
 
 	if data.IncrementMin != nil {
-		message.Embeds[0].Description += fmt.Sprintf("**Minimum Bid:** + %s above previous.\n", PriceFormat(*data.IncrementMin, data.Event.GuildID, data.Currency))
+		message.Embeds[0].Description += fmt.Sprintf("**Minimum Bid:** + %s above previous.\n", h.PriceFormat(*data.IncrementMin, data.Event.GuildID, data.Currency))
 	}
 
 	if data.IncrementMax != nil {
-		message.Embeds[0].Description += fmt.Sprintf("**Maximum Bid:** + %s above previous.\n", PriceFormat(*data.IncrementMax, data.Event.GuildID, data.Currency))
+		message.Embeds[0].Description += fmt.Sprintf("**Maximum Bid:** + %s above previous.\n", h.PriceFormat(*data.IncrementMax, data.Event.GuildID, data.Currency))
 	}
 
 	if data.TargetPrice != nil {
@@ -307,7 +301,7 @@ func AuctionMessageFormat(data database.Auction) discordgo.MessageSend {
 	}
 
 	if data.Buyout != nil {
-		message.Embeds[0].Description += fmt.Sprintf("**Buyout Price:** %s.\n", PriceFormat(*data.Buyout, data.Event.GuildID, data.Currency))
+		message.Embeds[0].Description += fmt.Sprintf("**Buyout Price:** %s.\n", h.PriceFormat(*data.Buyout, data.Event.GuildID, data.Currency))
 	}
 
 	fieldName := "__**Starting Bid:**__"
@@ -322,7 +316,7 @@ func AuctionMessageFormat(data database.Auction) discordgo.MessageSend {
 
 	message.Embeds[0].Fields = append(message.Embeds[0].Fields, &discordgo.MessageEmbedField{
 		Name:   fieldName,
-		Value:  PriceFormat(data.Bid, data.Event.GuildID, data.Currency),
+		Value:  h.PriceFormat(data.Bid, data.Event.GuildID, data.Currency),
 		Inline: true,
 	})
 
@@ -361,7 +355,7 @@ func AuctionMessageFormat(data database.Auction) discordgo.MessageSend {
 
 	if data.BidHistory != nil {
 		if len(*data.BidHistory) > 4095 {
-			data.BidHistory = Ptr((*data.BidHistory)[len(*data.BidHistory)-4095:])
+			data.BidHistory = h.Ptr((*data.BidHistory)[len(*data.BidHistory)-4095:])
 		}
 		message.Embeds = append(message.Embeds, &discordgo.MessageEmbed{
 			Title:       "**Bid History**",

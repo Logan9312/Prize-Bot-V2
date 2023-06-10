@@ -13,21 +13,21 @@ type slashCommands struct {
 
 var BotCommands = slashCommands{
 	Local: []*discordgo.ApplicationCommand{
-		&c.ShopCommand,
+		//&c.ShopCommand,
 		//&c.QuestCommand,
 		//&QuestContextMenu,
 	},
 	Prod: []*discordgo.ApplicationCommand{
 		//&c.ProfileCommand,
 		&c.AuctionCommand,
-		&c.BidCommand,
-		&c.GiveawayCommand,
+		//&c.BidCommand,
+		//&c.GiveawayCommand,
 		//&c.PrivacyCommand,
-		&c.ClaimCommand,
+		//&c.ClaimCommand,
 		//&c.PremiumCommand,
-		&c.SettingsCommand,
-		&c.CurrencyCommand,
-		&WhitelabelCommand,
+		//&c.SettingsCommand,
+		//&c.CurrencyCommand,
+		//&WhitelabelCommand,
 	},
 	Dev: []*discordgo.ApplicationCommand{
 		//&c.DevCommand,
@@ -63,7 +63,7 @@ func BotConnect(token, environment string) (*discordgo.Session, error) {
 			_, err := s.ApplicationCommandBulkOverwrite(s.State.User.ID, v.ID, BotCommands.Local)
 			fmt.Println("Commands added to guild: " + v.Name)
 			if err != nil {
-				return s, fmt.Errorf("Bulk Overwrite Local Command Error: %w", err)
+				return s, fmt.Errorf("bulk Overwrite Local Command Error: %w", err)
 			}
 		}
 	}
@@ -72,7 +72,7 @@ func BotConnect(token, environment string) (*discordgo.Session, error) {
 	if environment == "prod" {
 		_, err := s.ApplicationCommandBulkOverwrite(s.State.User.ID, "", BotCommands.Prod)
 		if err != nil {
-			return s, fmt.Errorf("Bulk Overwrite Prod Command Error: %w", err)
+			return s, fmt.Errorf("bulk Overwrite Prod Command Error: %w", err)
 		}
 
 		//Builds dev commands

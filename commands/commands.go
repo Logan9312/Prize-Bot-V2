@@ -1,4 +1,4 @@
-package models
+package commands
 
 import "github.com/bwmarrin/discordgo"
 
@@ -62,7 +62,6 @@ var (
 		Type:        discordgo.ApplicationCommandOptionNumber,
 		Name:        "buyout",
 		Description: "Set a price that someone can immediately win the auction for if they bid it or higher.",
-		Required:    false,
 	}
 
 	CommandOptionTargetPrice = &discordgo.ApplicationCommandOption{
@@ -240,6 +239,7 @@ var (
 )
 
 func Require(option *discordgo.ApplicationCommandOption) *discordgo.ApplicationCommandOption {
-	option.Required = true
-	return option
+	new_option := *option
+	new_option.Required = true
+	return &new_option
 }

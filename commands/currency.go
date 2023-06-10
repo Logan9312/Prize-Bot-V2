@@ -2,7 +2,6 @@ package commands
 
 import (
 	"github.com/Logan9312/Prize-Bot-V2/helpers"
-	. "github.com/Logan9312/Prize-Bot-V2/models"
 	"github.com/bwmarrin/discordgo"
 )
 

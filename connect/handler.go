@@ -69,7 +69,7 @@ func RegisterHandlers(s *discordgo.Session) {
 
 func InteractionHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	if i.Member == nil {
-		r.ErrorResponse(s, i, fmt.Errorf("Commands cannot be run in a DM. Please contact support if you're not currently in a DM with the bot."))
+		r.ErrorResponse(s, i, fmt.Errorf("commands cannot be run in a DM. Please contact support if you're not currently in a DM with the bot."))
 		return
 	}
 
