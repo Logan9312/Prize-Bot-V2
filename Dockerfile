@@ -17,6 +17,10 @@ COPY . .
 # Build the Go app
 RUN go build -o ./main .
 
+FROM alpine:3.15
+RUN apk add ca-certificates
 
-# Run the app
-CMD ["go run ."]
+COPY --from=build_base /tmp/app/main /main
+
+# Run the startup script
+CMD ["/main"]

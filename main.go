@@ -18,6 +18,8 @@ func main() {
 		fmt.Println("Error loading .env file:", err)
 	}
 
+	fmt.Println(os.Environ())
+
 	stripe.Key = os.Getenv("STRIPE_TOKEN")
 
 	//Connects database

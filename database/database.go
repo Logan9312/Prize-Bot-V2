@@ -30,7 +30,7 @@ func DatabaseConnect(password, host, env string) {
 
 func LocalDB() *gorm.DB {
 
-	db, err := gorm.Open(sqlite.Open("test"), &gorm.Config{
+	db, err := gorm.Open(sqlite.Open("/tmp/test.db"), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Info),
 	})
 	if err != nil {
