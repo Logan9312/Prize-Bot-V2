@@ -1,18 +1,28 @@
-# Start from a Debian image with the latest version of Go installed
-# and a workspace (GOPATH) configured at /go.
-FROM golang:1.19
+FROM golang:1.19-alpine AS build_base
 
-# Enable CGO
-ENV CGO_ENABLED=1
+RUN apk add --no-cache git
+RUN apk add build-base
 
-# Copy the local package files to the container's workspace.
-ADD . /go/src/my/app
+# Set the Current Working Directory inside the container
+WORKDIR /tmp/app
 
-# Build the application inside the container.
-RUN go install my/app
+# We want to populate the module cache based on the go.{mod,sum} files.
+COPY go.mod .
+COPY go.sum .
 
-# Run the application by default when the container starts.
-ENTRYPOINT /go/bin/my/app
+RUN go mod download
 
-# Document that the service listens on port 8080.
-EXPOSE 8080
+COPY . .
+
+# Build the Go app
+RUN go build -o ./main .
+
+FROM alpine:3.15
+RUN apk add --no-cache ca-certificates
+RUN apk add --no-cache jq
+
+COPY --from=build_base /tmp/app/main /main
+COPY --from=build_base /tmp/app/scripts/startup.sh /scripts/startup.sh
+
+# Run the app
+CMD ["/main"]
