@@ -205,7 +205,7 @@ func SetAuctionData(s *discordgo.Session, i *discordgo.InteractionCreate, data m
 	}
 
 	if data["channel_lock"] != nil {
-		auctionData.ChannelLock = h.Ptr(data["channel_lock"].(bool))
+		auctionData.ChannelLock = data["channel_lock"].(bool)
 	}
 
 	return auctionData, nil
@@ -227,15 +227,14 @@ func AuctionHostCheck(auctionSetup map[string]any, member *discordgo.Member) boo
 
 func AuctionStart(s *discordgo.Session, data database.Auction) (string, error) {
 
-	auctionSettings := &database.AuctionSetup{}
 	currencySettings := &database.CurrencySetup{}
 
-	result := database.DB.First(&auctionSettings, data.Event.GuildID)
-	if result.Error != nil {
-		fmt.Println("Error getting auction settings: " + result.Error.Error())
+	auctionSettings, err := database.GetAuctionSettings(data.Event.GuildID)
+	if err != nil {
+		fmt.Println(fmt.Errorf("error getting auction settings: %w", err))
 	}
 
-	result = database.DB.First(&currencySettings, data.Event.GuildID)
+	result := database.DB.First(&currencySettings, data.Event.GuildID)
 	if result.Error != nil {
 		fmt.Println("Error getting currency settings: " + result.Error.Error())
 	}
@@ -246,7 +245,7 @@ func AuctionStart(s *discordgo.Session, data database.Auction) (string, error) {
 	//TODO Make prefix work for editing and fix prefix working on create channel.
 
 	//TODO Rebuild Channel Lock
-	if !*data.ChannelLock {
+	if !data.ChannelLock {
 		channelCreateData := discordgo.GuildChannelCreateData{
 			Name: fmt.Sprintf("%s%s", *auctionSettings.ChannelPrefix, data.Event.Item),
 			Type: discordgo.ChannelTypeGuildText,

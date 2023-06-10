@@ -30,7 +30,7 @@ func DatabaseConnect(password, host, env string) {
 
 func LocalDB() *gorm.DB {
 
-	db, err := gorm.Open(sqlite.Open("tmp/test"), &gorm.Config{
+	db, err := gorm.Open(sqlite.Open("test"), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Info),
 	})
 	if err != nil {
@@ -52,4 +52,25 @@ func ProdDB(password, host string) *gorm.DB {
 	}
 
 	return db
+}
+
+func GetAuctionSettings(guildID string) (AuctionSetup, error) {
+
+	auctionSettings := AuctionSetup{}
+
+	result := DB.First(&auctionSettings, guildID)
+
+	if auctionSettings.ChannelPrefix == nil {
+		auctionSettings.ChannelPrefix = Ptr("💸│")
+	}
+
+	if result.Error != nil {
+		return auctionSettings, fmt.Errorf("Error getting auction settings: %w", result.Error)
+	}
+
+	return auctionSettings, nil
+}
+
+func Ptr[T any](v T) *T {
+	return &v
 }

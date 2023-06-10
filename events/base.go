@@ -74,12 +74,7 @@ func MessageFormat(data database.Event) discordgo.MessageSend {
 				Video:       &discordgo.MessageEmbedVideo{},
 				Provider:    &discordgo.MessageEmbedProvider{},
 				Author:      &discordgo.MessageEmbedAuthor{},
-				Fields: []*discordgo.MessageEmbedField{
-					{
-						Name:  "__**Details:**__",
-						Value: *data.Description,
-					},
-				},
+				Fields:      []*discordgo.MessageEmbedField{},
 			},
 		},
 	}
@@ -90,10 +85,11 @@ func MessageFormat(data database.Event) discordgo.MessageSend {
 		}
 	}
 
-	description := fmt.Sprintf("**Host:** <@%s>.\n", data.Host)
-
 	if data.Description != nil {
-		description += fmt.Sprintf("**Description:** %s\n", *data.Description)
+		message.Embeds[0].Fields = append(message.Embeds[0].Fields, &discordgo.MessageEmbedField{
+			Name:  "__**Details:**__",
+			Value: *data.Description,
+		})
 	}
 
 	if data.EndTime != nil {

@@ -12,15 +12,6 @@ import (
 	"github.com/stripe/stripe-go/v72"
 )
 
-// Environment struct
-type Environment struct {
-	Environment  string `env:"ENVIRONMENT,required"`
-	DiscordToken string `env:"DISCORD_TOKEN,required"`
-	Host         string `env:"DB_HOST"`
-	Password     string `env:"DB_PASSWORD"`
-	StripeToken  string `env:"STRIPE_TOKEN"`
-}
-
 func main() {
 
 	err := godotenv.Load(".env")

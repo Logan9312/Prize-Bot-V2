@@ -45,7 +45,7 @@ type Auction struct {
 	Buyout       *float64
 	IntegerOnly  bool
 	BidHistory   *string
-	ChannelLock  *bool
+	ChannelLock  bool
 
 	SnipeExtension *time.Duration
 	SnipeRange     *time.Duration
