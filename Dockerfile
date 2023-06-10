@@ -17,12 +17,6 @@ COPY . .
 # Build the Go app
 RUN go build -o ./main .
 
-FROM alpine:3.15
-RUN apk add --no-cache ca-certificates
-RUN apk add --no-cache jq
-
-COPY --from=build_base /tmp/app/main /main
-COPY --from=build_base /tmp/app/scripts/startup.sh /scripts/startup.sh
 
 # Run the app
 CMD ["/main"]
