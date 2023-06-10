@@ -2,12 +2,11 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
-	"os/signal"
 
 	"github.com/Logan9312/Prize-Bot-V2/connect"
 	"github.com/Logan9312/Prize-Bot-V2/database"
+	"github.com/Logan9312/Prize-Bot-V2/routers"
 	"github.com/joho/godotenv"
 	"github.com/stripe/stripe-go/v72"
 )
@@ -61,9 +60,6 @@ func main() {
 
 	fmt.Println("Bot is running!")
 
-	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, os.Interrupt)
-	log.Println("Press Ctrl+C to exit")
-	<-stop
+	routers.HealthCheck()
 
 }
