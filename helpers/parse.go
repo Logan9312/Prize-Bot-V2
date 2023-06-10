@@ -12,26 +12,31 @@ import (
 	"golang.org/x/text/message"
 )
 
-func ParseCommand(i *discordgo.InteractionCreate) map[string]interface{} {
-	data := i.ApplicationCommandData().Options
-	options := make(map[string]interface{})
-	parseOptions(data, options)
-	if options["image"] != nil {
-		options["image"] = ImageToURL(i, options["image"].(string))
+func ParseSlashCommand(i *discordgo.InteractionCreate) map[string]interface{} {
+	var options = make(map[string]interface{})
+	for _, option := range i.ApplicationCommandData().Options {
+		options[option.Name] = option.Value
 	}
+
 	return options
 }
 
-func parseOptions(data []*discordgo.ApplicationCommandInteractionDataOption, options map[string]interface{}) {
-	for _, option := range data {
-		if option.Options == nil {
-			options[option.Name] = option.Value
-		} else {
-			subOptions := make(map[string]interface{})
-			parseOptions(option.Options, subOptions)
-			options[option.Name] = subOptions
-		}
+func ParseSubCommand(i *discordgo.InteractionCreate) map[string]interface{} {
+	var options = make(map[string]interface{})
+	for _, option := range i.ApplicationCommandData().Options[0].Options {
+		options[option.Name] = option.Value
 	}
+
+	return options
+}
+
+func ParseSubSubCommand(i *discordgo.InteractionCreate) map[string]interface{} {
+	var options = make(map[string]interface{})
+	for _, option := range i.ApplicationCommandData().Options[0].Options[0].Options {
+		options[option.Name] = option.Value
+	}
+
+	return options
 }
 
 func ParseTime(inputDuration string) (time.Duration, error) {

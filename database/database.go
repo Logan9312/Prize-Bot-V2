@@ -6,6 +6,7 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 var DB *gorm.DB
@@ -29,11 +30,11 @@ func DatabaseConnect(password, host, env string) {
 
 func LocalDB() *gorm.DB {
 
-	db, err := gorm.Open(sqlite.Open("/tmp/test.db"), &gorm.Config{
-		//Logger: logger.Default.LogMode(logger.Info),
+	db, err := gorm.Open(sqlite.Open("tmp/test"), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Info),
 	})
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("Error creating Sqlite Database", err)
 	}
 
 	return db

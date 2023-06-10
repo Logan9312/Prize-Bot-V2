@@ -115,7 +115,7 @@ func SaveAuction(auction database.Auction) error {
 }
 
 func AuctionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) error {
-	options := h.ParseCommand(i)
+	options := h.ParseSubCommand(i)
 	errors := []string{}
 
 	//Splits the auction names

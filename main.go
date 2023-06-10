@@ -8,7 +8,7 @@ import (
 
 	"github.com/Logan9312/Prize-Bot-V2/connect"
 	"github.com/Logan9312/Prize-Bot-V2/database"
-	"github.com/caarlos0/env"
+	"github.com/joho/godotenv"
 	"github.com/stripe/stripe-go/v72"
 )
 
@@ -16,7 +16,6 @@ import (
 type Environment struct {
 	Environment  string `env:"ENVIRONMENT,required"`
 	DiscordToken string `env:"DISCORD_TOKEN,required"`
-	Migrate      bool   `env:"MIGRATE"`
 	Host         string `env:"DB_HOST"`
 	Password     string `env:"DB_PASSWORD"`
 	StripeToken  string `env:"STRIPE_TOKEN"`
@@ -24,20 +23,21 @@ type Environment struct {
 
 func main() {
 
-	environment := Environment{}
-
-	if err := env.Parse(&environment); err != nil {
-		fmt.Println(err)
-		log.Fatal("FAILED TO LOAD ENVIRONMENT VARIABLES")
+	err := godotenv.Load(".env")
+	if err != nil {
+		log.Fatal("Error loading .env file:", err)
 	}
 
-	stripe.Key = environment.StripeToken
+	value := os.Getenv("DISCORD_TOKEN")
+	fmt.Println("Value:", value)
+
+	stripe.Key = os.Getenv("STRIPE_TOKEN")
 
 	//Connects database
-	database.DatabaseConnect(environment.Password, environment.Host, environment.Environment)
+	database.DatabaseConnect(os.Getenv("DB_PASSWORD"), os.Getenv("DB_HOST"), os.Getenv("ENVIRONMENT"))
 
 	//Connects main bot
-	mainSession, err := connect.BotConnect(environment.DiscordToken, environment.Environment)
+	mainSession, err := connect.BotConnect(os.Getenv("DISCORD_TOKEN"), os.Getenv("ENVIRONMENT"))
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -57,7 +57,7 @@ func main() {
 	}
 
 	for _, v := range WhiteLabels {
-		s, err := connect.BotConnect(v["bot_token"].(string), environment.Environment)
+		s, err := connect.BotConnect(v["bot_token"].(string), os.Getenv("ENVIRONMENT"))
 		if err != nil {
 			fmt.Println("Error connecting bot: %w", err)
 		}

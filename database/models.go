@@ -19,6 +19,7 @@ type AuctionSetup struct {
 	GuildID         string `gorm:"primaryKey"`
 	Category        *string
 	AlertRole       *string
+	CurrencyID      uint
 	Currency        *Currency
 	LogChannel      *string
 	HostRole        *string
@@ -32,18 +33,20 @@ type AuctionSetup struct {
 
 // TODO Auction Setup should NEVER be used aside from initial auction creations
 type Auction struct {
-	Event          Event
-	EventID        string
-	Bid            float64
-	WinnerID       *string
-	IncrementMin   *float64
-	IncrementMax   *float64
-	TargetPrice    *float64
-	Buyout         *float64
-	IntegerOnly    bool
-	BidHistory     *string
-	ChannelLock    *bool
-	Currency       *Currency
+	Event        Event
+	EventID      uint
+	Currency     *Currency
+	CurrencyID   uint
+	Bid          float64
+	WinnerID     *string
+	IncrementMin *float64
+	IncrementMax *float64
+	TargetPrice  *float64
+	Buyout       *float64
+	IntegerOnly  bool
+	BidHistory   *string
+	ChannelLock  *bool
+
 	SnipeExtension *time.Duration
 	SnipeRange     *time.Duration
 }
@@ -133,6 +136,7 @@ type ShopSetup struct {
 }
 
 type Currency struct {
+	ID          uint `gorm:"primaryKey"`
 	Symbol      string
 	RightSide   bool // True if the currency should display on the right side
 	UseCurrency bool // True if user's currency is used for transaction.

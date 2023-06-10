@@ -5,14 +5,15 @@ import (
 	"strings"
 	"time"
 
+	c "github.com/Logan9312/Prize-Bot-V2/commands"
 	r "github.com/Logan9312/Prize-Bot-V2/responses"
 	"github.com/bwmarrin/discordgo"
 )
 
 // Move these to commands package
 var commandMap = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate) error{
-	/*"auction":        c.Auction,
-	"bid":            c.AuctionBid,
+	"auction": c.Auction,
+	/*"bid":            c.AuctionBid,
 	"profile":        c.Profile,
 	"giveaway":       c.Giveaway,
 	"shop":           c.Shop,
@@ -24,8 +25,8 @@ var commandMap = map[string]func(s *discordgo.Session, i *discordgo.InteractionC
 	"quest":          c.Quest,
 	"currency":       c.Currency,
 	"stats":          c.Stats,
-	"help":       Help,
-	"whitelabel": Whitelabel,*/
+	"help":           Help,
+	"whitelabel":     Whitelabel,*/
 }
 
 var buttonMap = map[string]func(*discordgo.Session, *discordgo.InteractionCreate) error{
@@ -69,7 +70,7 @@ func RegisterHandlers(s *discordgo.Session) {
 
 func InteractionHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	if i.Member == nil {
-		r.ErrorResponse(s, i, fmt.Errorf("commands cannot be run in a DM. Please contact support if you're not currently in a DM with the bot."))
+		r.ErrorResponse(s, i, fmt.Errorf("commands cannot be run in a DM. Please contact support if you're not currently in a DM with the bot"))
 		return
 	}
 
@@ -78,7 +79,7 @@ func InteractionHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			r.ErrorResponse(s, i, err)
 		}
 	} else {
-		r.ErrorResponse(s, i, fmt.Errorf("Response has not been set properly, please contact Logan to fix"))
+		r.ErrorResponse(s, i, fmt.Errorf("response has not been set properly, please contact Logan to fix"))
 	}
 
 }
