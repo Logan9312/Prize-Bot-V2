@@ -1,8 +1,8 @@
 package commands
 
 import (
+	. "github.com/Logan9312/Prize-Bot-V2/models"
 	"github.com/bwmarrin/discordgo"
-	. "gitlab.com/logan9312/discord-auction-bot/models"
 )
 
 var ShopCommand = discordgo.ApplicationCommand{

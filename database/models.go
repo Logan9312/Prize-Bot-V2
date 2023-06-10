@@ -2,8 +2,6 @@ package database
 
 import (
 	"time"
-
-	"gitlab.com/logan9312/discord-auction-bot/events"
 )
 
 type DevSetup struct {
@@ -34,7 +32,7 @@ type AuctionSetup struct {
 
 // TODO Auction Setup should NEVER be used aside from initial auction creations
 type Auction struct {
-	Event          events.Event
+	Event          Event
 	EventID        string
 	Bid            float64
 	WinnerID       *string
@@ -43,7 +41,7 @@ type Auction struct {
 	TargetPrice    *float64
 	Buyout         *float64
 	IntegerOnly    bool
-	BidHistory     string
+	BidHistory     *string
 	ChannelLock    *bool
 	Currency       *Currency
 	SnipeExtension *time.Duration
@@ -159,4 +157,20 @@ type Quest struct {
 type Errors struct {
 	ErrorID string `gorm:"primaryKey"`
 	UserID  string `gorm:"primaryKey;autoIncrement:false"`
+}
+
+type Event struct {
+	ID          uint `gorm:"primaryKey"`
+	BotID       string
+	GuildID     string
+	Host        string
+	Item        string
+	ChannelID   *string
+	MessageID   *string
+	StartTime   *time.Time
+	EndTime     *time.Time
+	ImageURL    *string
+	Description *string
+	Note        *string
+	AlertRole   *string
 }

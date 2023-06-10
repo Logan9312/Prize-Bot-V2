@@ -3,13 +3,13 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
+	"os/signal"
 
+	"github.com/Logan9312/Prize-Bot-V2/connect"
+	"github.com/Logan9312/Prize-Bot-V2/database"
 	"github.com/caarlos0/env"
 	"github.com/stripe/stripe-go/v72"
-	"gitlab.com/logan9312/discord-auction-bot/commands"
-	"gitlab.com/logan9312/discord-auction-bot/connect"
-	"gitlab.com/logan9312/discord-auction-bot/database"
-	"gitlab.com/logan9312/discord-auction-bot/routers"
 )
 
 // Environment struct
@@ -56,8 +56,6 @@ func main() {
 		fmt.Println("Error fetching whitelabels:", result.Error)
 	}
 
-	connect.Timers(mainSession)
-
 	for _, v := range WhiteLabels {
 		s, err := connect.BotConnect(v["bot_token"].(string), environment.Environment)
 		if err != nil {
@@ -69,13 +67,15 @@ func main() {
 				fmt.Println("Error setting status", err)
 			}
 		}
-		connect.Timers(s)
 	}
 
-	go commands.SetRoles(mainSession)
+	//go commands.SetRoles(mainSession)
 
 	fmt.Println("Bot is running!")
 
-	//TODO Possibly put this at the start as a goroutine
-	routers.BotStatus()
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt)
+	log.Println("Press Ctrl+C to exit")
+	<-stop
+
 }

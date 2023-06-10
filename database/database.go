@@ -3,13 +3,10 @@ package database
 import (
 	"fmt"
 
-
-	"gitlab.com/logan9312/discord-auction-bot/events"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
-
 
 var DB *gorm.DB
 
@@ -23,7 +20,7 @@ func DatabaseConnect(password, host, env string) {
 		DB = LocalDB()
 	}
 
-	err := DB.AutoMigrate(events.Event{}, AuctionSetup{}, Auction{}, AuctionQueue{}, GiveawaySetup{}, Giveaway{}, ClaimSetup{}, CurrencySetup{}, Claim{}, DevSetup{}, UserProfile{}, ShopSetup{}, WhiteLabels{})
+	err := DB.AutoMigrate(Event{}, AuctionSetup{}, Auction{}, AuctionQueue{}, GiveawaySetup{}, Giveaway{}, ClaimSetup{}, CurrencySetup{}, Claim{}, DevSetup{}, UserProfile{}, ShopSetup{}, WhiteLabels{})
 	if err != nil {
 		fmt.Println(err)
 	}

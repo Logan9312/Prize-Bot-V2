@@ -3,9 +3,9 @@ package connect
 import (
 	"fmt"
 
+	"github.com/Logan9312/Prize-Bot-V2/database"
+	r "github.com/Logan9312/Prize-Bot-V2/responses"
 	"github.com/bwmarrin/discordgo"
-	c "gitlab.com/logan9312/discord-auction-bot/commands"
-	"gitlab.com/logan9312/discord-auction-bot/database"
 	"gorm.io/gorm/clause"
 )
 
@@ -21,10 +21,10 @@ var WhitelabelCommand = discordgo.ApplicationCommand{
 	},
 }
 
-func Whitelabel(s *discordgo.Session, i *discordgo.InteractionCreate) error {
+/*func Whitelabel(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 
 	if !c.CheckPremiumUser(i.Member.User.ID) {
-		return PremiumError(s, i, "Whitelabelling is restricted to premium users only")
+		return r.PremiumError(s, i, "Whitelabelling is restricted to premium users only")
 	}
 
 	switch i.ApplicationCommandData().Options[0].Name {
@@ -32,7 +32,7 @@ func Whitelabel(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 		return WhitelabelToken(s, i)
 	}
 	return fmt.Errorf("Unknown Currency command, please contact support")
-}
+}*/
 
 func WhitelabelToken(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 
@@ -89,8 +89,12 @@ func WhitelabelTokenModal(s *discordgo.Session, i *discordgo.InteractionCreate) 
 		return fmt.Errorf("Error saving bot data to database: %w", result.Error)
 	}
 
-	return SuccessResponse(s, i, &discordgo.InteractionResponseData{
-		Title:       "Custom Bot Token Added",
-		Description: fmt.Sprintf("<@%s> should now be functional.", newSession.State.User.ID),
+	return r.SuccessResponse(s, i, &discordgo.InteractionResponseData{
+		Embeds: []*discordgo.MessageEmbed{
+			{
+				Title:       "Custom Bot Token Added",
+				Description: fmt.Sprintf("<@%s> should now be functional.", newSession.State.User.ID),
+			},
+		},
 	})
 }

@@ -3,14 +3,13 @@ package commands
 import (
 	"fmt"
 	"strings"
-	"time"
 
+	"github.com/Logan9312/Prize-Bot-V2/database"
+	"github.com/Logan9312/Prize-Bot-V2/events"
+	. "github.com/Logan9312/Prize-Bot-V2/helpers"
+	. "github.com/Logan9312/Prize-Bot-V2/models"
+	r "github.com/Logan9312/Prize-Bot-V2/responses"
 	"github.com/bwmarrin/discordgo"
-	"gitlab.com/logan9312/discord-auction-bot/database"
-	"gitlab.com/logan9312/discord-auction-bot/events"
-	. "gitlab.com/logan9312/discord-auction-bot/helpers"
-	. "gitlab.com/logan9312/discord-auction-bot/models"
-	r "gitlab.com/logan9312/discord-auction-bot/responses"
 )
 
 var AuctionCommand = discordgo.ApplicationCommand{
@@ -169,7 +168,7 @@ func AuctionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 		}
 	}
 	if len(errors) > 0 {
-		return fmt.Errorf("One or more auctions failed to start:\n", strings.Join(errors, "\n"))
+		return fmt.Errorf("One or more auctions failed to start:\n%s", strings.Join(errors, "\n"))
 	}
 	return nil
 }
@@ -287,16 +286,12 @@ func AuctionStart(s *discordgo.Session, data database.Auction) (string, error) {
 func AuctionMessageFormat(data database.Auction) discordgo.MessageSend {
 	message := events.MessageFormat(data.Event)
 
-	if data.WinnerID != nil {
-		message.Embeds[0].Description += fmt.Sprintf("**Current Winner:** <@%d>\n", *data.WinnerID)
-	}
-
 	if data.IncrementMin != nil {
-		message.Embeds[0].Description += fmt.Sprintf("**Minimum Bid:** + %s above previous.\n", PriceFormat(data["increment_min"].(float64), guildID, data["currency"]))
+		message.Embeds[0].Description += fmt.Sprintf("**Minimum Bid:** + %s above previous.\n", PriceFormat(*data.IncrementMin, data.Event.GuildID, data.Currency))
 	}
 
 	if data.IncrementMax != nil {
-		message.Embeds[0].Description += fmt.Sprintf("**Maximum Bid:** + %s above previous.\n", PriceFormat(data["increment_max"].(float64), guildID, data["currency"]))
+		message.Embeds[0].Description += fmt.Sprintf("**Maximum Bid:** + %s above previous.\n", PriceFormat(*data.IncrementMax, data.Event.GuildID, data.Currency))
 	}
 
 	if data.TargetPrice != nil {
@@ -308,27 +303,75 @@ func AuctionMessageFormat(data database.Auction) discordgo.MessageSend {
 	}
 
 	if data.SnipeExtension != nil && data.SnipeRange != nil {
-		message.Embeds[0].Description += fmt.Sprintf("**Anti Snipe:** If a bid is placed within the last %s, the auction will be extended by %s.\n", data["snipe_range"], data["snipe_extension"].(time.Duration).String())
+		message.Embeds[0].Description += fmt.Sprintf("**Anti Snipe:** If a bid is placed within the last %s, the auction will be extended by %s.\n", data.SnipeRange, data.SnipeExtension.String())
 	}
 
 	if data.Buyout != nil {
-		message.Embeds[0].Description += fmt.Sprintf("**Buyout Price:** %s.\n", PriceFormat(data.Buyout, guildID, data["currency"]))
+		message.Embeds[0].Description += fmt.Sprintf("**Buyout Price:** %s.\n", PriceFormat(*data.Buyout, data.Event.GuildID, data.Currency))
 	}
 
-	if data["bid"] != nil {
-		if data["winner"] != nil {
-			auctionfields = append(auctionfields, &discordgo.MessageEmbedField{
-				Name:   "__**Current Highest Bid:**__",
-				Value:  PriceFormat(data["bid"].(float64), guildID, data["currency"]),
-				Inline: true,
-			})
-		} else {
-			auctionfields = append(auctionfields, &discordgo.MessageEmbedField{
-				Name:   "__**Starting Bid:**__",
-				Value:  PriceFormat(data["bid"].(float64), guildID, data["currency"]),
-				Inline: true,
-			})
-		}
+	fieldName := "__**Starting Bid:**__"
+	if data.WinnerID != nil {
+		fieldName = "__**Current Highest Bid:**__"
 	}
+
+	message.Embeds[0].Fields = append(message.Embeds[0].Fields, &discordgo.MessageEmbedField{
+		Name:  "__**How to Bid**__",
+		Value: "Use the /bid command or type `/bid {value}` in chat\nEx: `/bid 550`\n",
+	})
+
+	message.Embeds[0].Fields = append(message.Embeds[0].Fields, &discordgo.MessageEmbedField{
+		Name:   fieldName,
+		Value:  PriceFormat(data.Bid, data.Event.GuildID, data.Currency),
+		Inline: true,
+	})
+
+	if data.WinnerID != nil {
+		message.Embeds[0].Fields = append(message.Embeds[0].Fields, &discordgo.MessageEmbedField{
+			Name:   "__**Current Winner**__",
+			Value:  fmt.Sprintf("<@%s>", *data.WinnerID),
+			Inline: true,
+		})
+	}
+
+	message.Components = []discordgo.MessageComponent{
+		discordgo.ActionsRow{
+			Components: []discordgo.MessageComponent{
+				discordgo.Button{
+					Label: "End Auction",
+					Style: 4,
+					Emoji: discordgo.ComponentEmoji{
+						Name: "🛑",
+					},
+					CustomID: "endauction",
+				},
+				discordgo.Button{
+					Label:    "Clear Chat",
+					Style:    3,
+					CustomID: "clearauction",
+					Emoji: discordgo.ComponentEmoji{
+						Name: "restart",
+						ID:   "835685528917114891",
+					},
+					Disabled: false,
+				},
+			},
+		},
+	}
+
+	if data.BidHistory != nil {
+		if len(*data.BidHistory) > 4095 {
+			data.BidHistory = Ptr((*data.BidHistory)[len(*data.BidHistory)-4095:])
+		}
+		message.Embeds = append(message.Embeds, &discordgo.MessageEmbed{
+			Title:       "**Bid History**",
+			Description: *data.BidHistory,
+			Color:       0x8073ff,
+			Image: &discordgo.MessageEmbedImage{
+				URL: "https://i.imgur.com/9wo7diC.png",
+			},
+		})
+	}
+
 	return message
 }
