@@ -18,8 +18,6 @@ func main() {
 		fmt.Println("Error loading .env file:", err)
 	}
 
-	fmt.Println(os.Environ())
-
 	stripe.Key = os.Getenv("STRIPE_TOKEN")
 
 	//Connects database
@@ -57,6 +55,8 @@ func main() {
 			}
 		}
 	}
+
+	//TODO Figure out how to set docker env variables on railway, or use nixpacks to enable CGO, or don't use Sqlite on deployment
 
 	//go commands.SetRoles(mainSession)
 

@@ -33,24 +33,24 @@ type AuctionSetup struct {
 
 // TODO Auction Setup should NEVER be used aside from initial auction creations
 type Auction struct {
-	Event        Event
-	EventID      uint
-	Currency     *Currency
-	CurrencyID   uint
-	Bid          float64
-	WinnerID     *string
-	IncrementMin *float64
-	IncrementMax *float64
-	TargetPrice  *float64
-	Buyout       *float64
-	IntegerOnly  bool
-	BidHistory   *string
-	ChannelLock  bool
-
+	ID             int `gorm:"primaryKey"`
+	Event          Event
+	EventID        uint
+	Currency       *Currency
+	CurrencyID     uint
+	Bid            float64
+	WinnerID       *string
+	IncrementMin   *float64
+	IncrementMax   *float64
+	TargetPrice    *float64
+	Buyout         *float64
+	IntegerOnly    bool
+	BidHistory     *string
 	SnipeExtension *time.Duration
 	SnipeRange     *time.Duration
 }
 
+// TODO Potentially add EventSettings to make it easier to create functions that work on multiple event types
 type AuctionQueue struct {
 	ID              int `gorm:"primaryKey"`
 	ChannelID       string

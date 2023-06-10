@@ -204,12 +204,9 @@ func SetAuctionData(s *discordgo.Session, i *discordgo.InteractionCreate, data m
 		auctionData.IntegerOnly = data["integer_only"].(bool)
 	}
 
-	if data["channel_lock"] != nil {
-		auctionData.ChannelLock = data["channel_lock"].(bool)
-	}
+	//TODO Rework Channel Lock so it's actually useful
 
 	return auctionData, nil
-
 }
 
 func AuctionHostCheck(auctionSetup map[string]any, member *discordgo.Member) bool {
@@ -242,24 +239,22 @@ func AuctionStart(s *discordgo.Session, data database.Auction) (string, error) {
 	//TODO Mark queued auction as started in database
 	auctionMessage := AuctionMessageFormat(data)
 
-	//TODO Make prefix work for editing and fix prefix working on create channel.
-
 	//TODO Rebuild Channel Lock
-	if !data.ChannelLock {
-		channelCreateData := discordgo.GuildChannelCreateData{
-			Name: fmt.Sprintf("%s%s", *auctionSettings.ChannelPrefix, data.Event.Item),
-			Type: discordgo.ChannelTypeGuildText,
-		}
-		if auctionSettings.Category != nil {
-			channelCreateData.ParentID = *auctionSettings.Category
-		}
-
-		channel, err := s.GuildChannelCreateComplex(data.Event.GuildID, channelCreateData)
-		if err != nil {
-			return "", err
-		}
-		data.Event.ChannelID = &channel.ID
+	channelCreateData := discordgo.GuildChannelCreateData{
+		Name: fmt.Sprintf("%s%s", *auctionSettings.ChannelPrefix, data.Event.Item),
+		Type: discordgo.ChannelTypeGuildText,
 	}
+
+	if auctionSettings.Category != nil {
+		channelCreateData.ParentID = *auctionSettings.Category
+	}
+
+	channel, err := s.GuildChannelCreateComplex(data.Event.GuildID, channelCreateData)
+	if err != nil {
+		return "", err
+	}
+	data.Event.ChannelID = &channel.ID
+
 
 	message, err := r.SuccessMessage(s, *data.Event.ChannelID, &auctionMessage)
 	if err != nil {
@@ -280,38 +275,33 @@ func AuctionMessageFormat(data database.Auction) discordgo.MessageSend {
 	message := events.MessageFormat(data.Event)
 
 	if data.IncrementMin != nil {
-		message.Embeds[0].Description += fmt.Sprintf("**Minimum Bid:** + %s above previous.\n", h.PriceFormat(*data.IncrementMin, data.Event.GuildID, data.Currency))
+		message.Embeds[0].Fields[0].Value += fmt.Sprintf("**Minimum Bid:** + %s above previous.\n", h.PriceFormat(*data.IncrementMin, data.Event.GuildID, data.Currency))
 	}
 
 	if data.IncrementMax != nil {
-		message.Embeds[0].Description += fmt.Sprintf("**Maximum Bid:** + %s above previous.\n", h.PriceFormat(*data.IncrementMax, data.Event.GuildID, data.Currency))
+		message.Embeds[0].Fields[0].Value += fmt.Sprintf("**Maximum Bid:** + %s above previous.\n", h.PriceFormat(*data.IncrementMax, data.Event.GuildID, data.Currency))
 	}
 
 	if data.TargetPrice != nil {
-		message.Embeds[0].Description += "**Target Price:** The host has set a hidden target price for this auction.\n"
+		message.Embeds[0].Fields[0].Value += "**Target Price:** The host has set a hidden target price for this auction.\n"
 	}
 
 	if data.IntegerOnly {
-		message.Embeds[0].Description += fmt.Sprintf("**Integer Only:** %t.\n", data.IntegerOnly)
+		message.Embeds[0].Fields[0].Value += fmt.Sprintf("**Integer Only:** %t.\n", data.IntegerOnly)
 	}
 
 	if data.SnipeExtension != nil && data.SnipeRange != nil {
-		message.Embeds[0].Description += fmt.Sprintf("**Anti Snipe:** If a bid is placed within the last %s, the auction will be extended by %s.\n", data.SnipeRange, data.SnipeExtension.String())
+		message.Embeds[0].Fields[0].Value += fmt.Sprintf("**Anti Snipe:** If a bid is placed within the last %s, the auction will be extended by %s.\n", data.SnipeRange, data.SnipeExtension.String())
 	}
 
 	if data.Buyout != nil {
-		message.Embeds[0].Description += fmt.Sprintf("**Buyout Price:** %s.\n", h.PriceFormat(*data.Buyout, data.Event.GuildID, data.Currency))
+		message.Embeds[0].Fields[0].Value += fmt.Sprintf("**Buyout Price:** %s.\n", h.PriceFormat(*data.Buyout, data.Event.GuildID, data.Currency))
 	}
 
 	fieldName := "__**Starting Bid:**__"
 	if data.WinnerID != nil {
 		fieldName = "__**Current Highest Bid:**__"
 	}
-
-	message.Embeds[0].Fields = append(message.Embeds[0].Fields, &discordgo.MessageEmbedField{
-		Name:  "__**How to Bid**__",
-		Value: "Use the /bid command or type `/bid {value}` in chat\nEx: `/bid 550`\n",
-	})
 
 	message.Embeds[0].Fields = append(message.Embeds[0].Fields, &discordgo.MessageEmbedField{
 		Name:   fieldName,
@@ -326,6 +316,11 @@ func AuctionMessageFormat(data database.Auction) discordgo.MessageSend {
 			Inline: true,
 		})
 	}
+
+	message.Embeds[0].Fields = append(message.Embeds[0].Fields, &discordgo.MessageEmbedField{
+		Name:  "__**How to Bid**__",
+		Value: "Use the /bid command or type `/bid {value}` in chat\nEx: `/bid 550`\n",
+	})
 
 	message.Components = []discordgo.MessageComponent{
 		discordgo.ActionsRow{

@@ -239,7 +239,7 @@ var (
 )
 
 func Require(option *discordgo.ApplicationCommandOption) *discordgo.ApplicationCommandOption {
-	new_option := *option
-	new_option.Required = true
-	return &new_option
+	newOption := *option
+	newOption.Required = true
+	return &newOption
 }

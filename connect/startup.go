@@ -56,33 +56,32 @@ func BotConnect(token, environment string) (*discordgo.Session, error) {
 
 	fmt.Println(s.State.User.Username, " Starting Up...")
 
-	//Builds local commands
-	if environment == "local" {
-		s.LogLevel = discordgo.LogInformational
-		for _, v := range s.State.Guilds {
-			_, err := s.ApplicationCommandBulkOverwrite(s.State.User.ID, v.ID, BotCommands.Local)
-			fmt.Println("Commands added to guild: " + v.Name)
-			if err != nil {
-				return s, fmt.Errorf("bulk Overwrite Local Command Error: %w", err)
-			}
+	//Clears all guild commands
+	//s.LogLevel = discordgo.LogInformational
+	for _, v := range s.State.Guilds {
+		_, err := s.ApplicationCommandBulkOverwrite(s.State.User.ID, v.ID, []*discordgo.ApplicationCommand{})
+		fmt.Println("Commands added to guild: " + v.Name)
+		if err != nil {
+			return s, fmt.Errorf("bulk Overwrite Local Command Error: %w", err)
 		}
 	}
 
 	//Builds prod commands
-	if environment == "prod" {
-		_, err := s.ApplicationCommandBulkOverwrite(s.State.User.ID, "", BotCommands.Prod)
-		if err != nil {
-			return s, fmt.Errorf("bulk Overwrite Prod Command Error: %w", err)
-		}
+	commands := BotCommands.Prod
+	if environment == "local" {
+		commands = BotCommands.Local
+	}
 
-		//Builds dev commands
-		if s.State.User.ID == "880507494248615999" {
-			_, err = s.ApplicationCommandBulkOverwrite(s.State.User.ID, "915767892467920967", BotCommands.Dev)
-			if err != nil {
-				return s, fmt.Errorf("Bulk Overwrite Dev Command Error: %w", err)
-			}
-		}
+	//Builds global commands
+	_, err = s.ApplicationCommandBulkOverwrite(s.State.User.ID, "", commands)
+	if err != nil {
+		return s, fmt.Errorf("bulk Overwrite Prod Command Error: %w", err)
+	}
 
+	//Builds dev commands
+	_, err = s.ApplicationCommandBulkOverwrite(s.State.User.ID, "915767892467920967", BotCommands.Dev)
+	if err != nil {
+		return s, fmt.Errorf("Bulk Overwrite Dev Command Error: %w", err)
 	}
 
 	fmt.Println(s.State.User.Username + " bot startup complete!")
