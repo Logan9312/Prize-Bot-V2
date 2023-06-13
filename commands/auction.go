@@ -404,68 +404,61 @@ func AuctionBid(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 	}
 
 	//TODO Refactor some of this Potentially add Buyout Button instead.
-	if auction.Buyout == nil || (auction.Buyout != nil && bid < *auction.Buyout) {
+	if auction.Buyout == nil || bid < *auction.Buyout {
 		//Checking if the auction is capped and the current winner is bidding.
-		if member.User.ID == auctionMap["winner"] && auctionMap["increment_max"] != nil {
+		if i.Member.User.ID == *auction.WinnerID && auction.IncrementMax != nil {
 			return fmt.Errorf("cannot out bid yourself on a capped bid auction")
 		}
 
 		//Checking if integer only bidding is enabled.
-		if auctionMap["integer_only"] != nil && auctionMap["integer_only"].(bool) && bid != math.Floor(bid) {
-			return fmt.Errorf("Your bid must be an integer for this auction! For example: " + fmt.Sprint(math.Floor(bid)) + " instead of " + PriceFormat(bid, guildID, auctionMap["currency"]))
+		if auction.IntegerOnly && bid != math.Floor(bid) {
+			return fmt.Errorf("Your bid must be an integer for this auction! For example: " + fmt.Sprint(math.Floor(bid)) + " instead of " + h.PriceFormat(bid, auction.Event.GuildID, auction.Currency))
 		}
 
 		//Checking if bid is higher than minimum increment.
-		if auctionMap["increment_min"] != nil && bid-auctionMap["bid"].(float64) < auctionMap["increment_min"].(float64) {
-			return fmt.Errorf("Bid must be higher than the previous bid by: %s\n\u200b", PriceFormat(auctionMap["increment_min"].(float64), guildID, auctionMap["currency"]))
+		if auction.IncrementMin != nil && bid-auction.Bid < *auction.IncrementMin {
+			return fmt.Errorf("Bid must be higher than the previous bid by: %s\n\u200b", h.PriceFormat(*auction.IncrementMin, auction.Event.GuildID, auction.Currency))
 		}
 
 		//Checking if bid is lower than maximum increment.
-		if auctionMap["increment_max"] != nil && bid-auctionMap["bid"].(float64) > auctionMap["increment_max"].(float64) {
-			return fmt.Errorf("Bid must be no more than %s higher than the previous bid. \n\u200b", PriceFormat(auctionMap["increment_max"].(float64), auctionMap["guild_id"].(string), auctionMap["currency"]))
+		if auction.IncrementMax != nil && bid-auction.Bid > *auction.IncrementMax {
+			return fmt.Errorf("Bid must be no more than %s higher than the previous bid. \n\u200b", h.PriceFormat(*auction.IncrementMax, auction.Event.GuildID, auction.Currency))
 		}
 	}
 
-	if bid < auctionMap["bid"].(float64) {
-		return fmt.Errorf("You must bid higher than: " + PriceFormat(auctionMap["bid"].(float64), auctionMap["guild_id"].(string), auctionMap["currency"]))
+	if bid < auction.Bid {
+		return fmt.Errorf("You must bid higher than: " + h.PriceFormat(auction.Bid, auction.Event.GuildID, auction.Currency))
 	}
 
-	if bid == auctionMap["bid"].(float64) && auctionMap["winner"] != nil {
-		return fmt.Errorf("You must bid higher than: " + PriceFormat(auctionMap["bid"].(float64), auctionMap["guild_id"].(string), auctionMap["currency"]))
+	if bid == auction.Bid && auction.WinnerID != nil {
+		return fmt.Errorf("You must bid higher than: " + h.PriceFormat(auction.Bid, auction.Event.GuildID, auction.Currency))
 	}
 
-	if auctionMap["bid_history"] == nil {
-		auctionMap["bid_history"] = ""
+	auction.Bid = bid
+	auction.WinnerID = &i.Member.User.ID
+	auction.BidHistory = h.Ptr(fmt.Sprintf("%s\n-> %s: ", *auction.BidHistory, i.Member.User.Username, h.PriceFormat(bid, auction.Event.GuildID, auction.Currency)))
+
+	if auction.Buyout != nil && bid >= *auction.Buyout {
+		auction.Event.EndTime = h.Ptr(time.Now())
 	}
 
-	auctionMap["bid"] = bid
-	auctionMap["winner"] = member.User.ID
-	auctionMap["bid_history"] = auctionMap["bid_history"].(string) + "\n-> " + member.User.Username + ": " + strings.TrimRight(strings.TrimRight(p.Sprintf("%f", bid), "0"), ".")
-
-	if auctionMap["buyout"] != nil && bid >= auction.Buyout {
-		auctionMap["end_time"] = time.Now()
-	}
-
-	result = database.DB.Model(database.Auction{
-		ChannelID: channelID,
-	}).Updates(auctionMap)
+	result := database.DB.Updates(auction)
 	if result.Error != nil {
 		return result.Error
 	}
 
-	if auctionMap["buyout"] != nil && bid >= auction.Buyout {
+	if auction.Buyout != nil && bid >= *auction.Buyout {
 		go AuctionEnd(s, channelID, guildID)
 	}
 
-	auctionMap["snipe_extension"] = auctionSetup["snipe_extension"]
-	auctionMap["snipe_range"] = auctionSetup["snipe_range"]
+	//TODO Handle setting snipe range and snipe extension mid auction
 
 	m, err := EventFormat(s, auctionMap, EventTypeAuction, guildID)
 	if err != nil {
 		return err
 	}
 
-	_, err = h.SuccessMessageEdit(s, channelID, auctionMap["message_id"].(string), m)
+	_, err = h.SuccessMessageEdit(s, auction.Event.ChannelID, auction.Event.MessageID, m)
 	if err != nil {
 		return err
 	}

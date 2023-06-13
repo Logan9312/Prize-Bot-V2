@@ -56,8 +56,6 @@ func main() {
 		}
 	}
 
-	//TODO Figure out how to set docker env variables on railway, or use nixpacks to enable CGO, or don't use Sqlite on deployment
-
 	//go commands.SetRoles(mainSession)
 
 	fmt.Println("Bot is running!")

@@ -61,7 +61,7 @@ func ImageToURL(i *discordgo.InteractionCreate, image string) *string {
 	return &i.ApplicationCommandData().Resolved.Attachments[image].URL
 }
 
-func PriceFormat(price float64, guildID string, override *database.Currency) string {
+func PriceFormat(price float64, guildID string, override *database.Currency, hideCurrency ...bool) string {
 
 	p := message.NewPrinter(language.English)
 	currencyData := database.CurrencySetup{}
@@ -76,7 +76,9 @@ func PriceFormat(price float64, guildID string, override *database.Currency) str
 	if currencyData.Currency == "" {
 		return priceString
 	} else {
-		if currencyData.Side == "right" {
+		if len(hideCurrency) > 0 && hideCurrency[0] {
+			return priceString
+		} else if currencyData.Side == "right" {
 			return fmt.Sprintf("%s %s", priceString, currencyData.Currency)
 		} else {
 			return fmt.Sprintf("%s %s", currencyData.Currency, priceString)
