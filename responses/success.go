@@ -34,6 +34,15 @@ func SuccessMessage(s *discordgo.Session, channelID string, data *discordgo.Mess
 	return s.ChannelMessageSendComplex(channelID, data)
 }
 
+func SuccessMessageEdit(s *discordgo.Session, channelID, messageID string, data *discordgo.MessageEdit) (*discordgo.Message, error) {
+	for _, embed := range data.Embeds {
+		if embed.Color == 0 {
+			embed.Color = ResponseColorPurple
+		}
+	}
+	return s.ChannelMessageEditComplex(data)
+}
+
 func ExperimentalResponse(s *discordgo.Session, i *discordgo.InteractionCreate, data *discordgo.InteractionResponseData) error {
 	if len(data.Embeds) == 0 {
 		return Errorfmt(fmt.Errorf("no embeds provided"))
