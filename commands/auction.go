@@ -447,16 +447,11 @@ func AuctionBid(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 		return result.Error
 	}
 
-	if auction.Buyout != nil && bid >= *auction.Buyout {
-		//TODO possibly refactor this to just change the end time
-		go AuctionEnd(s, auction.Event.ChannelID, auction.Event.GuildID)
-	}
-
 	//TODO Handle setting snipe range and snipe extension mid auction
 
 	m := AuctionMessageFormat(auction)
 
-	_, err = r.SuccessMessageEdit(s)
+	_, err = r.SuccessMessageEdit(s, i.ChannelID, *auction.Event.MessageID, &m)
 	if err != nil {
 		return err
 	}
@@ -466,85 +461,67 @@ func AuctionBid(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 
 func AuctionEnd(s *discordgo.Session, channelID, guildID string) error {
 
-	auction, err := database.GetAuctionData(channelID)
+	/* auction, err := database.GetAuctionData(channelID)
+	if err != nil {
+		return err
+	} */
+
+	auctionSettings, err := database.GetAuctionSettings(guildID)
 	if err != nil {
 		return err
 	}
-	auctionSetup := map[string]any{}
 
-	result := database.DB.Model(database.AuctionSetup{}).First(&auctionSetup, guildID)
-	if result.Error != nil {
-		fmt.Println(result.Error.Error())
-	}
+	//TODO Add in a check for if the auction has ended already
 
-	if auctionMap["end_time"] == nil {
-		s.ChannelMessageSend("943175605858496602", fmt.Sprint(auctionMap))
-	}
-
-	//Pause auction ending until end time if the auction is not over yet.
-	if auctionMap["end_time"] != nil && auctionMap["end_time"].(time.Time).After(time.Now()) {
-		fmt.Println(time.Until(auctionMap["end_time"].(time.Time)))
-		time.Sleep(time.Until(auctionMap["end_time"].(time.Time)))
-		return AuctionEnd(s, channelID, guildID)
-	}
-
-	if auctionMap["message_id"] == nil {
-		auctionMap["message_id"] = ""
-	}
-
-	message := discordgo.NewMessageEdit(channelID, auctionMap["message_id"].(string))
-	messageEmbeds, err := s.ChannelMessage(channelID, auctionMap["message_id"].(string))
+	//TODO Handle the case when an auction message is not fetchable.
+	/* message, err := s.ChannelMessage(channelID, *auction.Event.MessageID)
 	if err != nil {
-		result = database.DB.Delete(database.Auction{
-			ChannelID: channelID,
-		})
-		if result.Error != nil {
-			fmt.Println(result.Error.Error())
-		}
 		return err
-	}
+	} */
 
-	if auctionSetup["log_channel"] == nil {
+	if auctionSettings.LogChannel == nil {
 		fmt.Println("Log channel has not been set for guild: " + guildID)
 		// TODO Instead of sending an error message, update the auction with the error
-		_, err := h.ErrorMessage(s, channelID, "Auction cannot end because log channel has not been set. Please setup an auction log using `/settings auction`. You might need to end the auction manually after setting the channel.")
-		if err != nil {
-			return err
-		}
+		_, err := r.ErrorMessage(s, channelID, fmt.Errorf("Auction cannot end because log channel has not been set. Please setup an auction log using `/settings auction`. You might need to end the auction manually after setting the channel."))
 		return err
 	}
 
-	if auctionMap["target_price"] != nil && auctionMap["target_price"].(float64) > auctionMap["bid"].(float64) {
+	//TODO Move this to claim output
+	/* 	if auction.TargetPrice != nil && *auction.TargetPrice > auction.Bid {
+
 		auctionMap["target_message"] = fmt.Sprintf("The host had set a target price of %s that has not been reached.", PriceFormat(auctionMap["target_price"].(float64), guildID, auctionMap["currency"]))
-	}
+	} */
 
-	if auctionMap["use_currency"] != nil && auctionMap["use_currency"].(bool) && auctionMap["winner"] != nil {
-		err = CurrencySubtractUser(guildID, auctionMap["winner"].(string), auctionMap["bid"].(float64))
-		if err != nil {
-			return err
-		}
-		err = CurrencyAddUser(guildID, auctionMap["host"].(string), auctionMap["bid"].(float64))
-		if err != nil {
-			return err
-		}
-		//TODO Add in a message about this when the auction ends
-		//TODO Move this to the claiming process.
-	}
+	//TODO Add in a message about this when the auction ends
+	//TODO Move this to the claiming process.
+	/*
+		if auctionMap["use_currency"] != nil && auctionMap["use_currency"].(bool) && auctionMap["winner"] != nil {
+			err = CurrencySubtractUser(guildID, auctionMap["winner"].(string), auctionMap["bid"].(float64))
+			if err != nil {
+				return err
+			}
+			err = CurrencyAddUser(guildID, auctionMap["host"].(string), auctionMap["bid"].(float64))
+			if err != nil {
+				return err
+			}
 
-	if auctionMap["buyout"] != nil {
-		if auctionMap["bid"].(float64) >= auctionMap["buyout"].(float64) {
+		} */
+
+	//TODO Potentially move this to claiming
+	/* 	if auction.Buyout != nil {
+		if auction.Bid >= *auction.Buyout {
 			auctionMap["buyout_message"] = fmt.Sprintf("%s\n\u200bBUYOUT!", PriceFormat(auctionMap["buyout"].(float64), auctionMap["guild_id"].(string), auctionMap["currency"]))
 		}
-	}
+	} */
 
-	auctionMap["log_channel"] = auctionSetup["log_channel"]
-
-	err = ClaimOutput(s, auctionMap, "Auction")
+	//TODO Undisable claiming lmao
+	/* err = ClaimOutput(s, auctionMap, "Auction")
 	if err != nil {
 		return fmt.Errorf("Claim Output Error: " + err.Error())
-	}
+	} */
 
-	if message != nil {
+	//TODO Do something silly and wacky when the auction ends again
+	/* 	if message != nil {
 		message.Embeds = append(messageEmbeds.Embeds, &discordgo.MessageEmbed{
 			Title:       "Auction has ended!",
 			Description: "Thank you for participating!",
@@ -573,20 +550,16 @@ func AuctionEnd(s *discordgo.Session, channelID, guildID string) error {
 		if err != nil {
 			fmt.Println(err)
 		}
-	}
+	}*/
 
-	if auctionMap["channel_lock"] != true {
+	//TODO Add functionality for channel lock again
+	/* 	if auction != true {
 		time.Sleep(30 * time.Second)
 		_, err = s.ChannelDelete(channelID)
 		if err != nil {
 			fmt.Println(err)
 		}
-	}
-
-	result = database.DB.Delete(database.Auction{}, channelID)
-	if result.Error != nil {
-		fmt.Println(result.Error.Error())
-	}
+	} */
 
 	return nil
 }

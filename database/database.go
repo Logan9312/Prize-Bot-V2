@@ -72,6 +72,7 @@ func GetAuctionSettings(guildID string) (AuctionSetup, error) {
 }
 
 func GetAuctionData(channelID string) (Auction, error) {
+	// TODO Maybe check bot ID when fetching data
 	auction := Auction{}
 
 	result := DB.Preload("Event").Where("event.channel_id = ?", channelID).First(&auction)

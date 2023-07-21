@@ -34,13 +34,22 @@ func SuccessMessage(s *discordgo.Session, channelID string, data *discordgo.Mess
 	return s.ChannelMessageSendComplex(channelID, data)
 }
 
-func SuccessMessageEdit(s *discordgo.Session, channelID, messageID string, data *discordgo.MessageEdit) (*discordgo.Message, error) {
+func SuccessMessageEdit(s *discordgo.Session, channelID, messageID string, data *discordgo.MessageSend) (*discordgo.Message, error) {
 	for _, embed := range data.Embeds {
 		if embed.Color == 0 {
 			embed.Color = ResponseColorPurple
 		}
 	}
-	return s.ChannelMessageEditComplex(data)
+	return s.ChannelMessageEditComplex(&discordgo.MessageEdit{
+		Content:         &data.Content,
+		Components:      data.Components,
+		AllowedMentions: data.AllowedMentions,
+		Embeds:          data.Embeds,
+		Files:           data.Files,
+		ID:              messageID,
+		Channel:         channelID,
+		Embed:           data.Embed,
+	})
 }
 
 func ExperimentalResponse(s *discordgo.Session, i *discordgo.InteractionCreate, data *discordgo.InteractionResponseData) error {
