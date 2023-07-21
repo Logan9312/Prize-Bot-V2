@@ -436,7 +436,7 @@ func AuctionBid(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 
 	auction.Bid = bid
 	auction.WinnerID = &i.Member.User.ID
-	auction.BidHistory = h.Ptr(fmt.Sprintf("%s\n-> %s: ", *auction.BidHistory, i.Member.User.Username, h.PriceFormat(bid, auction.Event.GuildID, auction.Currency)))
+	auction.BidHistory = h.Ptr(fmt.Sprintf("%s\n-> %s: %s", *auction.BidHistory, i.Member.User.Username, h.PriceFormat(bid, auction.Event.GuildID, auction.Currency)))
 
 	if auction.Buyout != nil && bid >= *auction.Buyout {
 		auction.Event.EndTime = h.Ptr(time.Now())
