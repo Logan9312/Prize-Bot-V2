@@ -16,9 +16,9 @@ func DatabaseConnect(password, host, env string) {
 	defer fmt.Println("Bot has finished attempting to connect to the database!")
 
 	if env == "prod" {
-		DB = ProdDB(password, host)
+		DB = ProdDB(password, host).Session(&gorm.Session{FullSaveAssociations: true})
 	} else if env == "local" {
-		DB = LocalDB()
+		DB = LocalDB().Session(&gorm.Session{FullSaveAssociations: true})
 	}
 
 	err := DB.AutoMigrate(Event{}, AuctionSetup{}, Auction{}, AuctionQueue{}, GiveawaySetup{}, Giveaway{}, ClaimSetup{}, CurrencySetup{}, Claim{}, DevSetup{}, UserProfile{}, ShopSetup{}, WhiteLabels{})
@@ -31,6 +31,7 @@ func DatabaseConnect(password, host, env string) {
 func LocalDB() *gorm.DB {
 
 	db, err := gorm.Open(sqlite.Open("/tmp/test.db"), &gorm.Config{
+	//db, err := gorm.Open(sqlite.Open("test.db"), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Info),
 	})
 	if err != nil {
@@ -46,6 +47,7 @@ func ProdDB(password, host string) *gorm.DB {
 	dbname := "auction"
 
 	dsn := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s", host, port, dbuser, dbname, password)
+	fmt.Println(dsn)
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		fmt.Println(err)
@@ -56,31 +58,28 @@ func ProdDB(password, host string) *gorm.DB {
 
 func GetAuctionSettings(guildID string) (AuctionSetup, error) {
 
-	auctionSettings := AuctionSetup{}
+	auctionSettings := AuctionSetup{
+		GuildID: guildID,
+	}
 
-	result := DB.First(&auctionSettings, guildID)
+	result := DB.FirstOrInit(&auctionSettings)
+	if result.Error != nil {
+		return auctionSettings, fmt.Errorf("Error getting auction settings: %w", result.Error)
+	}
 
 	//TODO Test if this still works before fetching data
 	if auctionSettings.ChannelPrefix == nil {
 		auctionSettings.ChannelPrefix = Ptr("💸│")
-	}
-	if result.Error != nil {
-		return auctionSettings, fmt.Errorf("Error getting auction settings: %w", result.Error)
 	}
 
 	return auctionSettings, nil
 }
 
 func GetAuctionData(channelID string) (Auction, error) {
-	// TODO Maybe check bot ID when fetching data
-	auction := Auction{}
+	var auction Auction
 
-	result := DB.Preload("Event").Where("event.channel_id = ?", channelID).First(&auction)
-	if result.Error != nil {
-		return auction, fmt.Errorf("Error getting auction settings: %w", result.Error)
-	}
-
-	return auction, nil
+	err := DB.Joins("JOIN events ON events.id = auctions.event_id").Where("events.channel_id = ?", channelID).Preload("Event").First(&auction).Error
+	return auction, err
 }
 
 func Ptr[T any](v T) *T {

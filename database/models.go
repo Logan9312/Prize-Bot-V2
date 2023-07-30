@@ -32,6 +32,7 @@ type AuctionSetup struct {
 }
 
 // TODO Auction Setup should NEVER be used aside from initial auction creations
+
 type Auction struct {
 	ID             int `gorm:"primaryKey"`
 	Event          Event
@@ -51,6 +52,7 @@ type Auction struct {
 }
 
 // TODO Potentially add EventSettings to make it easier to create functions that work on multiple event types
+
 type AuctionQueue struct {
 	ID              int `gorm:"primaryKey"`
 	ChannelID       string

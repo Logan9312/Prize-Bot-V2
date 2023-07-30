@@ -111,9 +111,8 @@ func Auction(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 	return fmt.Errorf("unknown Auction command, please contact support")
 }
 
-func SaveAuction(auction database.Auction) error {
-	//TODO wtf is gorm save??
-	return database.DB.Save(&auction).Error
+func SaveAuction(auction *database.Auction) error {
+	return database.DB.Save(auction).Error
 }
 
 func AuctionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) error {
@@ -136,12 +135,22 @@ func AuctionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 		return fmt.Errorf("error setting auction data: %w", err)
 	}
 
+	r.SuccessResponse(s, i, &discordgo.InteractionResponseData{
+		Content:    "",
+		Components: []discordgo.MessageComponent{},
+		Embeds: []*discordgo.MessageEmbed{
+			{
+				Title:       "**Starting Auctions**",
+				Description: "Please wait while the auctions are being created",
+			},
+		},
+	})
+
 	//TODO Optimize selecting multiple auctions
 	for _, item := range auctions {
 		//Copies all of the options to a fresh auctionMap
 		auctionData.Event.Item = item
-
-		err := SaveAuction(auctionData)
+		err := SaveAuction(&auctionData)
 		if err != nil {
 			errors = append(errors, err.Error())
 		}
@@ -154,7 +163,7 @@ func AuctionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 		_, err = r.FollowUpSuccessResponse(s, i, &discordgo.WebhookParams{
 			Embeds: []*discordgo.MessageEmbed{
 				{
-					Title:       "**Auction Starting**",
+					Title:       "**Auction Started**",
 					Description: fmt.Sprintf("Auction has successfully been started in <#%s>!", channelID),
 				},
 			},
@@ -263,8 +272,7 @@ func AuctionStart(s *discordgo.Session, data database.Auction) (string, error) {
 	}
 
 	data.Event.MessageID = &message.ID
-
-	err = SaveAuction(data)
+	err = SaveAuction(&data)
 	if err != nil {
 		return *data.Event.ChannelID, fmt.Errorf("error saving auction to database, auction will not work: %w", result.Error)
 	}
@@ -380,7 +388,7 @@ func AuctionBid(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 	if err != nil {
 		return err
 	}
-	if message.Author.ID == s.State.User.ID {
+	if message.Author.ID != s.State.User.ID {
 		return fmt.Errorf("You must use the bot that started the auction to place a bid.")
 	}
 
@@ -405,8 +413,9 @@ func AuctionBid(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 
 	//TODO Refactor some of this Potentially add Buyout Button instead.
 	if auction.Buyout == nil || bid < *auction.Buyout {
+
 		//Checking if the auction is capped and the current winner is bidding.
-		if i.Member.User.ID == *auction.WinnerID && auction.IncrementMax != nil {
+		if (auction.WinnerID != nil) && (auction.IncrementMax != nil) && (i.Member.User.ID == *auction.WinnerID) {
 			return fmt.Errorf("cannot out bid yourself on a capped bid auction")
 		}
 
@@ -442,9 +451,9 @@ func AuctionBid(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 		auction.Event.EndTime = h.Ptr(time.Now())
 	}
 
-	result := database.DB.Updates(auction)
-	if result.Error != nil {
-		return result.Error
+	err = SaveAuction(&auction)
+	if err != nil {
+		return err
 	}
 
 	//TODO Handle setting snipe range and snipe extension mid auction
@@ -561,5 +570,83 @@ func AuctionEnd(s *discordgo.Session, channelID, guildID string) error {
 		}
 	} */
 
+	return nil
+}
+
+func AuctionEndButton(s *discordgo.Session, i *discordgo.InteractionCreate) error {
+
+	auction, err := database.GetAuctionData(i.ChannelID)
+	if err != nil {
+		return s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Components: []discordgo.MessageComponent{
+					discordgo.ActionsRow{
+						Components: []discordgo.MessageComponent{
+							discordgo.Button{
+								Label: "Delete Auction Channel",
+								Style: 4,
+								Emoji: discordgo.ComponentEmoji{
+									Name: "🛑",
+								},
+								CustomID: "delete_auction_channel",
+							},
+							discordgo.Button{
+								Label: "Support Server",
+								Style: discordgo.LinkButton,
+								Emoji: discordgo.ComponentEmoji{
+									Name:     "logo",
+									ID:       "889025400120950804",
+									Animated: false,
+								},
+								URL: "https://discord.gg/RxP2z5NGtj",
+							},
+						},
+					},
+				},
+				Embeds: []*discordgo.MessageEmbed{
+					{
+						Title:       "Error",
+						Description: "There was an error. Please contact support if you need help.\n**If you would like to close this auction channel, press the button below.**",
+						Color:       0xff0000,
+						Fields: []*discordgo.MessageEmbedField{
+							{
+								Name:  "**Error Message:**",
+								Value: err.Error(),
+							},
+						},
+					},
+				},
+				Flags: 64,
+			},
+		})
+	}
+
+	//TODO Configure this to allow setting different perms or do a poll about manage server.
+	if (i.Member.Permissions&discordgo.PermissionAdministrator == 0) && (i.Member.User.ID != auction.Event.Host) {
+		return fmt.Errorf("User must have administrator permissions or be host to run this command")
+	}
+
+	err = r.SuccessResponse(s, i, &discordgo.InteractionResponseData{
+		Embeds: []*discordgo.MessageEmbed{{
+			Title:       "End Auction",
+			Description: "Please wait while the auction is ending...",
+		}},
+	})
+	if err != nil {
+		return err
+	}
+
+	auction.Event.EndTime = h.Ptr(time.Now())
+
+	err = SaveAuction(&auction)
+	if err != nil {
+		return err
+	}
+
+	err = AuctionEnd(s, i.ChannelID, i.GuildID)
+	if err != nil {
+		return err
+	}
 	return nil
 }

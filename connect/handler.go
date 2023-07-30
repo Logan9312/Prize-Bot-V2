@@ -30,8 +30,8 @@ var commandMap = map[string]func(s *discordgo.Session, i *discordgo.InteractionC
 }
 
 var buttonMap = map[string]func(*discordgo.Session, *discordgo.InteractionCreate) error{
-	/*	"endauction":             c.AuctionEndButton,
-		"claim_prize":            c.ClaimPrizeButton,
+		"endauction":             c.AuctionEndButton,
+	/*	"claim_prize":            c.ClaimPrizeButton,
 		"clearauction":           c.ClearAuctionButton,
 		"delete_auction_queue":   c.DeleteAuctionQueue,
 		"delete_auction_channel": c.DeleteAuctionChannel,
