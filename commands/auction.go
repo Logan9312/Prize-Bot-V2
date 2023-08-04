@@ -111,10 +111,6 @@ func Auction(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 	return fmt.Errorf("unknown Auction command, please contact support")
 }
 
-func SaveAuction(auction *database.Auction) error {
-	return database.DB.Save(auction).Error
-}
-
 func AuctionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 	options := h.ParseSubCommand(i)
 	errors := []string{}
@@ -150,7 +146,7 @@ func AuctionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 	for _, item := range auctions {
 		//Copies all of the options to a fresh auctionMap
 		auctionData.Event.Item = item
-		err := SaveAuction(&auctionData)
+		err := database.SaveAuction(&auctionData)
 		if err != nil {
 			errors = append(errors, err.Error())
 		}
@@ -272,7 +268,7 @@ func AuctionStart(s *discordgo.Session, data database.Auction) (string, error) {
 	}
 
 	data.Event.MessageID = &message.ID
-	err = SaveAuction(&data)
+	err = database.SaveAuction(&data)
 	if err != nil {
 		return *data.Event.ChannelID, fmt.Errorf("error saving auction to database, auction will not work: %w", result.Error)
 	}
@@ -411,6 +407,16 @@ func AuctionBid(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 		return fmt.Errorf("cannot Bid, Auction has ended")
 	}
 
+	// When there is a winning bid
+	if bid < auction.Bid {
+		return fmt.Errorf("You must bid higher than: " + h.PriceFormat(auction.Bid, auction.Event.GuildID, auction.Currency))
+	}
+
+	// When there is no winning bid
+	if bid == auction.Bid && auction.WinnerID != nil {
+		return fmt.Errorf("You must bid higher than: " + h.PriceFormat(auction.Bid, auction.Event.GuildID, auction.Currency))
+	}
+
 	//TODO Refactor some of this Potentially add Buyout Button instead.
 	if auction.Buyout == nil || bid < *auction.Buyout {
 
@@ -435,23 +441,20 @@ func AuctionBid(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 		}
 	}
 
-	if bid < auction.Bid {
-		return fmt.Errorf("You must bid higher than: " + h.PriceFormat(auction.Bid, auction.Event.GuildID, auction.Currency))
-	}
-
-	if bid == auction.Bid && auction.WinnerID != nil {
-		return fmt.Errorf("You must bid higher than: " + h.PriceFormat(auction.Bid, auction.Event.GuildID, auction.Currency))
-	}
-
 	auction.Bid = bid
-	auction.WinnerID = &i.Member.User.ID
-	auction.BidHistory = h.Ptr(fmt.Sprintf("%s\n-> %s: %s", *auction.BidHistory, i.Member.User.Username, h.PriceFormat(bid, auction.Event.GuildID, auction.Currency)))
+	newBid := fmt.Sprintf("-> %s: %s", i.Member.User.Username, h.PriceFormat(bid, auction.Event.GuildID, auction.Currency))
+
+	if auction.BidHistory == nil {
+		auction.BidHistory = h.Ptr(newBid)
+	} else {
+		auction.BidHistory = h.Ptr(fmt.Sprintf("%s\n%s", *auction.BidHistory, newBid))
+	}
 
 	if auction.Buyout != nil && bid >= *auction.Buyout {
 		auction.Event.EndTime = h.Ptr(time.Now())
 	}
 
-	err = SaveAuction(&auction)
+	err = database.SaveAuction(&auction)
 	if err != nil {
 		return err
 	}
@@ -465,7 +468,13 @@ func AuctionBid(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 		return err
 	}
 
-	return nil
+	return r.SuccessResponse(s, i, &discordgo.InteractionResponseData{
+		Embeds: []*discordgo.MessageEmbed{
+			{
+				Title: "Bid has been successfully placed!",
+			},
+		},
+	})
 }
 
 func AuctionEnd(s *discordgo.Session, channelID, guildID string) error {
@@ -639,7 +648,7 @@ func AuctionEndButton(s *discordgo.Session, i *discordgo.InteractionCreate) erro
 
 	auction.Event.EndTime = h.Ptr(time.Now())
 
-	err = SaveAuction(&auction)
+	err = database.SaveAuction(&auction)
 	if err != nil {
 		return err
 	}

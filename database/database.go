@@ -30,8 +30,8 @@ func DatabaseConnect(password, host, env string) {
 
 func LocalDB() *gorm.DB {
 
-	db, err := gorm.Open(sqlite.Open("/tmp/test.db"), &gorm.Config{
-	//db, err := gorm.Open(sqlite.Open("test.db"), &gorm.Config{
+	db, err := gorm.Open(sqlite.Open("test.db"), &gorm.Config{
+		//db, err := gorm.Open(sqlite.Open("test.db"), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Info),
 	})
 	if err != nil {
@@ -80,6 +80,10 @@ func GetAuctionData(channelID string) (Auction, error) {
 
 	err := DB.Joins("JOIN events ON events.id = auctions.event_id").Where("events.channel_id = ?", channelID).Preload("Event").First(&auction).Error
 	return auction, err
+}
+
+func SaveAuction(auction *Auction) error {
+	return DB.Save(auction).Error
 }
 
 func Ptr[T any](v T) *T {
