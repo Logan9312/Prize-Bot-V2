@@ -1,7 +1,7 @@
 package commands
 
 import (
-	"github.com/Logan9312/Prize-Bot-V2/helpers"
+	u "github.com/Logan9312/Prize-Bot-V2/utils"
 	"github.com/bwmarrin/discordgo"
 )
 
@@ -37,5 +37,5 @@ var ClaimCommand = discordgo.ApplicationCommand{
 			},
 		},
 	},
-	DefaultMemberPermissions: helpers.Ptr(int64(discordgo.PermissionManageServer)),
+	DefaultMemberPermissions: u.Ptr(int64(discordgo.PermissionManageServer)),
 }

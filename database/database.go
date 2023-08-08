@@ -11,6 +11,10 @@ import (
 
 var DB *gorm.DB
 
+type Settings interface {
+	*AuctionSetup | *ClaimSetup | *CurrencySetup | *DevSetup | *GiveawaySetup | *ShopSetup
+}
+
 func DatabaseConnect(password, host, env string) {
 	fmt.Println("Connecting to Database...")
 	defer fmt.Println("Bot has finished attempting to connect to the database!")
@@ -73,6 +77,10 @@ func GetAuctionSettings(guildID string) (AuctionSetup, error) {
 	}
 
 	return auctionSettings, nil
+}
+
+func SaveSettings[T Settings](data map[string]any, model T) error {
+	return DB.Model(model).Save(data).Error
 }
 
 func GetAuctionData(channelID string) (Auction, error) {

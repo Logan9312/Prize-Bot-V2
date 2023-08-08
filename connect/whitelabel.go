@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/Logan9312/Prize-Bot-V2/database"
-	r "github.com/Logan9312/Prize-Bot-V2/responses"
+	u "github.com/Logan9312/Prize-Bot-V2/utils"
 	"github.com/bwmarrin/discordgo"
 	"gorm.io/gorm/clause"
 )
@@ -24,7 +24,7 @@ var WhitelabelCommand = discordgo.ApplicationCommand{
 /*func Whitelabel(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 
 	if !c.CheckPremiumUser(i.Member.User.ID) {
-		return r.PremiumError(s, i, "Whitelabelling is restricted to premium users only")
+		return u.PremiumError(s, i, "Whitelabelling is restricted to premium users only")
 	}
 
 	switch i.ApplicationCommandData().Options[0].Name {
@@ -89,7 +89,7 @@ func WhitelabelTokenModal(s *discordgo.Session, i *discordgo.InteractionCreate) 
 		return fmt.Errorf("error saving bot data to database: %w", result.Error)
 	}
 
-	return r.SuccessResponse(s, i, &discordgo.InteractionResponseData{
+	return u.SuccessResponse(s, i, &discordgo.InteractionResponseData{
 		Embeds: []*discordgo.MessageEmbed{
 			{
 				Title:       "Custom Bot Token Added",

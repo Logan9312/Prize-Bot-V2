@@ -1,8 +1,9 @@
 package commands
 
 import (
-	"github.com/Logan9312/Prize-Bot-V2/helpers"
+	
 	"github.com/bwmarrin/discordgo"
+	u "github.com/Logan9312/Prize-Bot-V2/utils"
 )
 
 var CurrencyCommand = discordgo.ApplicationCommand{
@@ -46,6 +47,6 @@ var CurrencyCommand = discordgo.ApplicationCommand{
 			Description: "Manage the currencies in your server.",
 		},
 	},
-	DefaultMemberPermissions: helpers.Ptr(int64(discordgo.PermissionManageServer)),
+	DefaultMemberPermissions: u.Ptr(int64(discordgo.PermissionManageServer)),
 	DMPermission:             new(bool),
 }

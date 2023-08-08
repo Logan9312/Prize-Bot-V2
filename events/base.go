@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/Logan9312/Prize-Bot-V2/database"
-	h "github.com/Logan9312/Prize-Bot-V2/helpers"
+	u "github.com/Logan9312/Prize-Bot-V2/utils"
 	"github.com/bwmarrin/discordgo"
 )
 
@@ -18,55 +18,56 @@ func NewEvent(botID string, i *discordgo.InteractionCreate, options map[string]a
 	}
 
 	if options["duration"] != nil {
-		duration, err := h.ParseTime(options["duration"].(string))
+		duration, err := u.ParseTime(options["duration"].(string))
 		if err != nil {
 			return database.Event{}, fmt.Errorf("error parsing time input: %w", err)
 		}
-		eventData.EndTime = h.Ptr(time.Now().Add(duration))
+		eventData.EndTime = u.Ptr(time.Now().Add(duration))
 	}
 
 	if options["image"] != nil {
-		eventData.ImageURL = h.ImageToURL(i, options["image"].(string))
+		eventData.ImageURL = u.ImageToURL(i, options["image"].(string))
 	}
 
-	duration, err := h.ParseTime(options["duration"].(string))
+	duration, err := u.ParseTime(options["duration"].(string))
 	if err != nil {
 		return eventData, fmt.Errorf("error parsing time input: %w", err)
 	}
 
 	if options["schedule"] != nil {
-		startTimeDuration, err := h.ParseTime(options["schedule"].(string))
+		startTimeDuration, err := u.ParseTime(options["schedule"].(string))
 		if err != nil {
 			return eventData, fmt.Errorf("error parsing time input: %w", err)
 		}
-		eventData.StartTime = h.Ptr(time.Now().Add(startTimeDuration))
-		eventData.EndTime = h.Ptr(eventData.StartTime.Add(duration))
+		eventData.StartTime = u.Ptr(time.Now().Add(startTimeDuration))
+		eventData.EndTime = u.Ptr(eventData.StartTime.Add(duration))
 	} else {
-		eventData.EndTime = h.Ptr(time.Now().Add(duration))
+		eventData.EndTime = u.Ptr(time.Now().Add(duration))
 	}
 
 	if options["image"] != nil {
-		eventData.ImageURL = h.ImageToURL(i, options["image"].(string))
+		eventData.ImageURL = u.ImageToURL(i, options["image"].(string))
 	}
 
 	if options["description"] != nil {
-		eventData.Description = h.Ptr(options["description"].(string))
+		eventData.Description = u.Ptr(options["description"].(string))
 	}
 
 	if options["note"] != nil {
-		eventData.Note = h.Ptr(options["note"].(string))
+		eventData.Note = u.Ptr(options["note"].(string))
 	}
 
 	return eventData, nil
 }
 
 // TODO Rework this file
+
 func MessageFormat(data database.Event) discordgo.MessageSend {
 
 	message := discordgo.MessageSend{
 		Embeds: []*discordgo.MessageEmbed{
 			{
-				Title:     fmt.Sprintf("Item: __**%s**__", data.Item),
+				Title: fmt.Sprintf("Item: __**%s**__", data.Item),
 				Fields: []*discordgo.MessageEmbedField{
 					{
 						Name:  "__**Details:**__",

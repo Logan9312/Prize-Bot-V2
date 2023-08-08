@@ -8,8 +8,7 @@ import (
 
 	"github.com/Logan9312/Prize-Bot-V2/database"
 	"github.com/Logan9312/Prize-Bot-V2/events"
-	h "github.com/Logan9312/Prize-Bot-V2/helpers"
-	r "github.com/Logan9312/Prize-Bot-V2/responses"
+	u "github.com/Logan9312/Prize-Bot-V2/utils"
 	"github.com/bwmarrin/discordgo"
 )
 
@@ -112,14 +111,14 @@ func Auction(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 }
 
 func AuctionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) error {
-	options := h.ParseSubCommand(i)
+	options := u.ParseSubCommand(i)
 	errors := []string{}
 
 	//Splits the auction names
 	auctions := strings.Split(options["item"].(string), ";")
 
 	if len(auctions) > 5 && !CheckPremiumGuild(i.GuildID) {
-		r.PremiumError(s, i, "Free users can only start 5 auctions in bulk. Upgrade to premium to start up to 100 in bulk.")
+		u.PremiumError(s, i, "Free users can only start 5 auctions in bulk. Upgrade to premium to start up to 100 in bulk.")
 	}
 
 	if len(auctions) > 100 {
@@ -131,7 +130,7 @@ func AuctionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 		return fmt.Errorf("error setting auction data: %w", err)
 	}
 
-	r.SuccessResponse(s, i, &discordgo.InteractionResponseData{
+	u.SuccessResponse(s, i, &discordgo.InteractionResponseData{
 		Content:    "",
 		Components: []discordgo.MessageComponent{},
 		Embeds: []*discordgo.MessageEmbed{
@@ -156,7 +155,7 @@ func AuctionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 			errors = append(errors, err.Error())
 		}
 
-		_, err = r.FollowUpSuccessResponse(s, i, &discordgo.WebhookParams{
+		_, err = u.FollowUpSuccessResponse(s, i, &discordgo.WebhookParams{
 			Embeds: []*discordgo.MessageEmbed{
 				{
 					Title:       "**Auction Started**",
@@ -178,7 +177,7 @@ func SetAuctionData(s *discordgo.Session, i *discordgo.InteractionCreate, data m
 
 	event, err := events.NewEvent(s.State.User.ID, i, data)
 	if err != nil {
-		return database.Auction{}, r.Errorfmt(err)
+		return database.Auction{}, u.Errorfmt(err)
 	}
 
 	auctionData := database.Auction{
@@ -192,19 +191,19 @@ func SetAuctionData(s *discordgo.Session, i *discordgo.InteractionCreate, data m
 	}
 
 	if data["increment_min"] != nil {
-		auctionData.IncrementMin = h.Ptr(data["increment_min"].(float64))
+		auctionData.IncrementMin = u.Ptr(data["increment_min"].(float64))
 	}
 
 	if data["increment_max"] != nil {
-		auctionData.IncrementMax = h.Ptr(data["increment_max"].(float64))
+		auctionData.IncrementMax = u.Ptr(data["increment_max"].(float64))
 	}
 
 	if data["target_price"] != nil {
-		auctionData.TargetPrice = h.Ptr(data["target_price"].(float64))
+		auctionData.TargetPrice = u.Ptr(data["target_price"].(float64))
 	}
 
 	if data["buyout"] != nil {
-		auctionData.Buyout = h.Ptr(data["buyout"].(float64))
+		auctionData.Buyout = u.Ptr(data["buyout"].(float64))
 	}
 
 	if data["integer_only"] != nil {
@@ -262,7 +261,7 @@ func AuctionStart(s *discordgo.Session, data database.Auction) (string, error) {
 	}
 	data.Event.ChannelID = &channel.ID
 
-	message, err := r.SuccessMessage(s, *data.Event.ChannelID, &auctionMessage)
+	message, err := u.SuccessMessage(s, *data.Event.ChannelID, &auctionMessage)
 	if err != nil {
 		return *data.Event.ChannelID, err
 	}
@@ -280,11 +279,11 @@ func AuctionMessageFormat(data database.Auction) discordgo.MessageSend {
 	message := events.MessageFormat(data.Event)
 
 	if data.IncrementMin != nil {
-		message.Embeds[0].Fields[0].Value += fmt.Sprintf("**Minimum Bid:** + %s above previous.\n", h.PriceFormat(*data.IncrementMin, data.Event.GuildID, data.Currency))
+		message.Embeds[0].Fields[0].Value += fmt.Sprintf("**Minimum Bid:** + %s above previous.\n", u.PriceFormat(*data.IncrementMin, data.Event.GuildID, data.Currency))
 	}
 
 	if data.IncrementMax != nil {
-		message.Embeds[0].Fields[0].Value += fmt.Sprintf("**Maximum Bid:** + %s above previous.\n", h.PriceFormat(*data.IncrementMax, data.Event.GuildID, data.Currency))
+		message.Embeds[0].Fields[0].Value += fmt.Sprintf("**Maximum Bid:** + %s above previous.\n", u.PriceFormat(*data.IncrementMax, data.Event.GuildID, data.Currency))
 	}
 
 	if data.TargetPrice != nil {
@@ -300,7 +299,7 @@ func AuctionMessageFormat(data database.Auction) discordgo.MessageSend {
 	}
 
 	if data.Buyout != nil {
-		message.Embeds[0].Fields[0].Value += fmt.Sprintf("**Buyout Price:** %s.\n", h.PriceFormat(*data.Buyout, data.Event.GuildID, data.Currency))
+		message.Embeds[0].Fields[0].Value += fmt.Sprintf("**Buyout Price:** %s.\n", u.PriceFormat(*data.Buyout, data.Event.GuildID, data.Currency))
 	}
 
 	fieldName := "__**Starting Bid:**__"
@@ -310,7 +309,7 @@ func AuctionMessageFormat(data database.Auction) discordgo.MessageSend {
 
 	message.Embeds[0].Fields = append(message.Embeds[0].Fields, &discordgo.MessageEmbedField{
 		Name:   fieldName,
-		Value:  h.PriceFormat(data.Bid, data.Event.GuildID, data.Currency),
+		Value:  u.PriceFormat(data.Bid, data.Event.GuildID, data.Currency),
 		Inline: true,
 	})
 
@@ -354,7 +353,7 @@ func AuctionMessageFormat(data database.Auction) discordgo.MessageSend {
 
 	if data.BidHistory != nil {
 		if len(*data.BidHistory) > 4095 {
-			data.BidHistory = h.Ptr((*data.BidHistory)[len(*data.BidHistory)-4095:])
+			data.BidHistory = u.Ptr((*data.BidHistory)[len(*data.BidHistory)-4095:])
 		}
 		message.Embeds = append(message.Embeds, &discordgo.MessageEmbed{
 			Title:       "**Bid History**",
@@ -371,7 +370,7 @@ func AuctionMessageFormat(data database.Auction) discordgo.MessageSend {
 
 func AuctionBid(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 
-	options := h.ParseSlashCommand(i)
+	options := u.ParseSlashCommand(i)
 	bid := options["bid"].(float64)
 
 	auction, err := database.GetAuctionData(i.ChannelID)
@@ -391,7 +390,7 @@ func AuctionBid(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 	if auction.SnipeRange != nil && auction.SnipeExtension != nil {
 		if time.Until(*auction.Event.EndTime) < *auction.SnipeRange {
 			*auction.Event.EndTime = auction.Event.EndTime.Add(*auction.SnipeExtension)
-			r.SuccessMessage(s, i.ChannelID, &discordgo.MessageSend{
+			u.SuccessMessage(s, i.ChannelID, &discordgo.MessageSend{
 				Embeds: []*discordgo.MessageEmbed{{
 					Title:       "**Anti-Snipe Activated!**",
 					Description: fmt.Sprintf("New End Time: <t:%d>", auction.Event.EndTime.Unix()),
@@ -409,12 +408,12 @@ func AuctionBid(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 
 	// When there is a winning bid
 	if bid < auction.Bid {
-		return fmt.Errorf("You must bid higher than: " + h.PriceFormat(auction.Bid, auction.Event.GuildID, auction.Currency))
+		return fmt.Errorf("You must bid higher than: " + u.PriceFormat(auction.Bid, auction.Event.GuildID, auction.Currency))
 	}
 
 	// When there is no winning bid
 	if bid == auction.Bid && auction.WinnerID != nil {
-		return fmt.Errorf("You must bid higher than: " + h.PriceFormat(auction.Bid, auction.Event.GuildID, auction.Currency))
+		return fmt.Errorf("You must bid higher than: " + u.PriceFormat(auction.Bid, auction.Event.GuildID, auction.Currency))
 	}
 
 	//TODO Refactor some of this Potentially add Buyout Button instead.
@@ -427,31 +426,31 @@ func AuctionBid(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 
 		//Checking if integer only bidding is enabled.
 		if auction.IntegerOnly && bid != math.Floor(bid) {
-			return fmt.Errorf("Your bid must be an integer for this auction! For example: " + fmt.Sprint(math.Floor(bid)) + " instead of " + h.PriceFormat(bid, auction.Event.GuildID, auction.Currency))
+			return fmt.Errorf("Your bid must be an integer for this auction! For example: " + fmt.Sprint(math.Floor(bid)) + " instead of " + u.PriceFormat(bid, auction.Event.GuildID, auction.Currency))
 		}
 
 		//Checking if bid is higher than minimum increment.
 		if auction.IncrementMin != nil && bid-auction.Bid < *auction.IncrementMin {
-			return fmt.Errorf("Bid must be higher than the previous bid by: %s\n\u200b", h.PriceFormat(*auction.IncrementMin, auction.Event.GuildID, auction.Currency))
+			return fmt.Errorf("Bid must be higher than the previous bid by: %s\n\u200b", u.PriceFormat(*auction.IncrementMin, auction.Event.GuildID, auction.Currency))
 		}
 
 		//Checking if bid is lower than maximum increment.
 		if auction.IncrementMax != nil && bid-auction.Bid > *auction.IncrementMax {
-			return fmt.Errorf("Bid must be no more than %s higher than the previous bid. \n\u200b", h.PriceFormat(*auction.IncrementMax, auction.Event.GuildID, auction.Currency))
+			return fmt.Errorf("Bid must be no more than %s higher than the previous bid. \n\u200b", u.PriceFormat(*auction.IncrementMax, auction.Event.GuildID, auction.Currency))
 		}
 	}
 
 	auction.Bid = bid
-	newBid := fmt.Sprintf("-> %s: %s", i.Member.User.Username, h.PriceFormat(bid, auction.Event.GuildID, auction.Currency))
+	newBid := fmt.Sprintf("-> %s: %s", i.Member.User.Username, u.PriceFormat(bid, auction.Event.GuildID, auction.Currency))
 
 	if auction.BidHistory == nil {
-		auction.BidHistory = h.Ptr(newBid)
+		auction.BidHistory = u.Ptr(newBid)
 	} else {
-		auction.BidHistory = h.Ptr(fmt.Sprintf("%s\n%s", *auction.BidHistory, newBid))
+		auction.BidHistory = u.Ptr(fmt.Sprintf("%s\n%s", *auction.BidHistory, newBid))
 	}
 
 	if auction.Buyout != nil && bid >= *auction.Buyout {
-		auction.Event.EndTime = h.Ptr(time.Now())
+		auction.Event.EndTime = u.Ptr(time.Now())
 	}
 
 	err = database.SaveAuction(&auction)
@@ -463,12 +462,12 @@ func AuctionBid(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 
 	m := AuctionMessageFormat(auction)
 
-	_, err = r.SuccessMessageEdit(s, i.ChannelID, *auction.Event.MessageID, &m)
+	_, err = u.SuccessMessageEdit(s, i.ChannelID, *auction.Event.MessageID, &m)
 	if err != nil {
 		return err
 	}
 
-	return r.SuccessResponse(s, i, &discordgo.InteractionResponseData{
+	return u.SuccessResponse(s, i, &discordgo.InteractionResponseData{
 		Embeds: []*discordgo.MessageEmbed{
 			{
 				Title: "Bid has been successfully placed!",
@@ -500,7 +499,7 @@ func AuctionEnd(s *discordgo.Session, channelID, guildID string) error {
 	if auctionSettings.LogChannel == nil {
 		fmt.Println("Log channel has not been set for guild: " + guildID)
 		// TODO Instead of sending an error message, update the auction with the error
-		_, err := r.ErrorMessage(s, channelID, fmt.Errorf("Auction cannot end because log channel has not been set. Please setup an auction log using `/settings auction`. You might need to end the auction manually after setting the channel."))
+		_, err := u.ErrorMessage(s, channelID, fmt.Errorf("Auction cannot end because log channel has not been set. Please setup an auction log using `/settings auction`. You might need to end the auction manually after setting the channel."))
 		return err
 	}
 
@@ -636,7 +635,7 @@ func AuctionEndButton(s *discordgo.Session, i *discordgo.InteractionCreate) erro
 		return fmt.Errorf("User must have administrator permissions or be host to run this command")
 	}
 
-	err = r.SuccessResponse(s, i, &discordgo.InteractionResponseData{
+	err = u.SuccessResponse(s, i, &discordgo.InteractionResponseData{
 		Embeds: []*discordgo.MessageEmbed{{
 			Title:       "End Auction",
 			Description: "Please wait while the auction is ending...",
@@ -646,7 +645,7 @@ func AuctionEndButton(s *discordgo.Session, i *discordgo.InteractionCreate) erro
 		return err
 	}
 
-	auction.Event.EndTime = h.Ptr(time.Now())
+	auction.Event.EndTime = u.Ptr(time.Now())
 
 	err = database.SaveAuction(&auction)
 	if err != nil {

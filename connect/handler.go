@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
-
 	c "github.com/Logan9312/Prize-Bot-V2/commands"
-	r "github.com/Logan9312/Prize-Bot-V2/responses"
+	u "github.com/Logan9312/Prize-Bot-V2/utils"
 	"github.com/bwmarrin/discordgo"
 )
 
@@ -30,7 +29,7 @@ var commandMap = map[string]func(s *discordgo.Session, i *discordgo.InteractionC
 }
 
 var buttonMap = map[string]func(*discordgo.Session, *discordgo.InteractionCreate) error{
-		"endauction":             c.AuctionEndButton,
+	"endauction": c.AuctionEndButton,
 	/*	"claim_prize":            c.ClaimPrizeButton,
 		"clearauction":           c.ClearAuctionButton,
 		"delete_auction_queue":   c.DeleteAuctionQueue,
@@ -70,16 +69,16 @@ func RegisterHandlers(s *discordgo.Session) {
 
 func InteractionHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	if i.Member == nil {
-		r.ErrorResponse(s, i, fmt.Errorf("commands cannot be run in a DM. Please contact support if you're not currently in a DM with the bot"))
+		u.ErrorResponse(s, i, fmt.Errorf("commands cannot be run in a DM. Please contact support if you're not currently in a DM with the bot"))
 		return
 	}
 
 	if f := InteractionRouter(s, i); f != nil {
 		if err := f(s, i); err != nil {
-			r.ErrorResponse(s, i, err)
+			u.ErrorResponse(s, i, err)
 		}
 	} else {
-		r.ErrorResponse(s, i, fmt.Errorf("response has not been set properly, please contact Logan to fix"))
+		u.ErrorResponse(s, i, fmt.Errorf("response has not been set properly, please contact Logan to fix"))
 	}
 
 }
@@ -139,7 +138,7 @@ func GuildCreateHandler(s *discordgo.Session, g *discordgo.GuildCreate) {
 	}
 
 	if !g.Unavailable {
-		_, err := r.SuccessMessage(s, channelID, &discordgo.MessageSend{
+		_, err := u.SuccessMessage(s, channelID, &discordgo.MessageSend{
 			Embeds: []*discordgo.MessageEmbed{
 				{
 					Title:       "New Server Joined!",
