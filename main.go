@@ -13,6 +13,8 @@ import (
 
 func main() {
 
+	test := range []int{1,2,3}
+
 	err := godotenv.Load(".env")
 	if err != nil {
 		fmt.Println("Error loading .env file:", err)

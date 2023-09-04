@@ -96,6 +96,11 @@ var BidCommand = discordgo.ApplicationCommand{
 	},
 }
 
+var BuyoutCommand = discordgo.ApplicationCommand{
+	Name:        "buyout",
+	Description: "Buyout an Auction",
+}
+
 func Auction(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 	switch i.ApplicationCommandData().Options[0].Name {
 	case "schedule":
@@ -271,6 +276,8 @@ func AuctionStart(s *discordgo.Session, data database.Auction) (string, error) {
 	if err != nil {
 		return *data.Event.ChannelID, fmt.Errorf("error saving auction to database, auction will not work: %w", result.Error)
 	}
+
+	fmt.Print()
 
 	return *data.Event.ChannelID, nil
 }
@@ -478,10 +485,10 @@ func AuctionBid(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 
 func AuctionEnd(s *discordgo.Session, channelID, guildID string) error {
 
-	/* auction, err := database.GetAuctionData(channelID)
+	auction, err := database.GetAuctionData(channelID)
 	if err != nil {
 		return err
-	} */
+	}
 
 	auctionSettings, err := database.GetAuctionSettings(guildID)
 	if err != nil {
