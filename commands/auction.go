@@ -510,39 +510,17 @@ func AuctionEnd(s *discordgo.Session, channelID, guildID string) error {
 		return err
 	}
 
-	//TODO Move this to claim output
-	/* 	if auction.TargetPrice != nil && *auction.TargetPrice > auction.Bid {
 
-		auctionMap["target_message"] = fmt.Sprintf("The host had set a target price of %s that has not been reached.", PriceFormat(auctionMap["target_price"].(float64), guildID, auctionMap["currency"]))
-	} */
 
-	//TODO Add in a message about this when the auction ends
-	//TODO Move this to the claiming process.
-	/*
-		if auctionMap["use_currency"] != nil && auctionMap["use_currency"].(bool) && auctionMap["winner"] != nil {
-			err = CurrencySubtractUser(guildID, auctionMap["winner"].(string), auctionMap["bid"].(float64))
-			if err != nil {
-				return err
-			}
-			err = CurrencyAddUser(guildID, auctionMap["host"].(string), auctionMap["bid"].(float64))
-			if err != nil {
-				return err
-			}
 
-		} */
-
-	//TODO Potentially move this to claiming
-	/* 	if auction.Buyout != nil {
-		if auction.Bid >= *auction.Buyout {
-			auctionMap["buyout_message"] = fmt.Sprintf("%s\n\u200bBUYOUT!", PriceFormat(auctionMap["buyout"].(float64), auctionMap["guild_id"].(string), auctionMap["currency"]))
-		}
-	} */
 
 	//TODO Undisable claiming lmao
-	/* err = ClaimOutput(s, auctionMap, "Auction")
+	err = ClaimOutput(s, auctionMap, "Auction")
 	if err != nil {
 		return fmt.Errorf("Claim Output Error: " + err.Error())
-	} */
+	} 
+
+	message := AuctionMessageFormat(auction)
 
 	//TODO Do something silly and wacky when the auction ends again
 	/* 	if message != nil {
