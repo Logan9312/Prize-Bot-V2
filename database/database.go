@@ -60,23 +60,46 @@ func ProdDB(password, host string) *gorm.DB {
 	return db
 }
 
-func GetAuctionSettings(guildID string) (AuctionSetup, error) {
+func GetSettings[T Settings](model T) (T, error) {
+	result := DB.FirstOrInit(&model)
+	if result.Error != nil {
+		return model, fmt.Errorf("Error getting settings: %w", result.Error)
+	}
+	return model, nil
+}
 
-	auctionSettings := AuctionSetup{
+func GetAuctionSettings(guildID string) (*AuctionSetup, error) {
+
+	auctionSettings := &AuctionSetup{
 		GuildID: guildID,
 	}
 
-	result := DB.FirstOrInit(&auctionSettings)
-	if result.Error != nil {
-		return auctionSettings, fmt.Errorf("Error getting auction settings: %w", result.Error)
-	}
-
-	//TODO Test if this still works before fetching data
+	auctionSettings, err := GetSettings(auctionSettings)
 	if auctionSettings.ChannelPrefix == nil {
 		auctionSettings.ChannelPrefix = Ptr("💸│")
 	}
+	if err != nil {
+		return auctionSettings, err
+	}
 
 	return auctionSettings, nil
+}
+
+func GetClaimSettings(guildID string) (*ClaimSetup, error) {
+
+	claimSettings := &ClaimSetup{
+		GuildID: guildID,
+	}
+
+	claimSettings, err := GetSettings(claimSettings)
+	if claimSettings.ChannelPrefix == nil {
+		claimSettings.ChannelPrefix = Ptr("🎁│")
+	}
+	if err != nil {
+		return claimSettings, err
+	}
+
+	return claimSettings, nil
 }
 
 func SaveSettings[T Settings](data map[string]any, model T) error {

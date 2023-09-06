@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/Logan9312/Prize-Bot-V2/database"
-	"github.com/Logan9312/Prize-Bot-V2/events"
 	u "github.com/Logan9312/Prize-Bot-V2/utils"
 	"github.com/bwmarrin/discordgo"
 )
@@ -180,7 +179,7 @@ func AuctionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 
 func SetAuctionData(s *discordgo.Session, i *discordgo.InteractionCreate, data map[string]any) (database.Auction, error) {
 
-	event, err := events.NewEvent(s.State.User.ID, i, data)
+	event, err := u.NewEvent(s.State.User.ID, i, data)
 	if err != nil {
 		return database.Auction{}, u.Errorfmt(err)
 	}
@@ -283,7 +282,7 @@ func AuctionStart(s *discordgo.Session, data database.Auction) (string, error) {
 }
 
 func AuctionMessageFormat(data database.Auction) discordgo.MessageSend {
-	message := events.MessageFormat(data.Event)
+	message := u.MessageFormat(data.Event)
 
 	if data.IncrementMin != nil {
 		message.Embeds[0].Fields[0].Value += fmt.Sprintf("**Minimum Bid:** + %s above previous.\n", u.PriceFormat(*data.IncrementMin, data.Event.GuildID, data.Currency))
@@ -510,49 +509,43 @@ func AuctionEnd(s *discordgo.Session, channelID, guildID string) error {
 		return err
 	}
 
-
-
-
-
 	//TODO Undisable claiming lmao
-	err = ClaimOutput(s, auctionMap, "Auction")
+	err = ClaimOutput(s, auction.Event)
 	if err != nil {
 		return fmt.Errorf("Claim Output Error: " + err.Error())
-	} 
+	}
 
 	message := AuctionMessageFormat(auction)
 
-	//TODO Do something silly and wacky when the auction ends again
-	/* 	if message != nil {
-		message.Embeds = append(messageEmbeds.Embeds, &discordgo.MessageEmbed{
-			Title:       "Auction has ended!",
-			Description: "Thank you for participating!",
-			Color:       0x32CD32,
-			Image: &discordgo.MessageEmbedImage{
-				URL: "https://c.tenor.com/MvFFZxXwdpwAAAAC/sold-ray.gif",
-			},
-		})
-		message.Components = []discordgo.MessageComponent{
-			discordgo.ActionsRow{
-				Components: []discordgo.MessageComponent{
-					discordgo.Button{
-						Label: "Support Server",
-						Style: discordgo.LinkButton,
-						Emoji: discordgo.ComponentEmoji{
-							Name:     "logo",
-							ID:       "889025400120950804",
-							Animated: false,
-						},
-						URL: "https://discord.gg/RxP2z5NGtj",
+	//TODO Allow Customizing this Embed
+	message.Embeds = append(message.Embeds, &discordgo.MessageEmbed{
+		Title:       "Auction has ended!",
+		Description: "Thank you for participating!",
+		Color:       0x32CD32,
+		Image: &discordgo.MessageEmbedImage{
+			URL: "https://c.tenor.com/MvFFZxXwdpwAAAAC/sold-ray.gif",
+		},
+	})
+	message.Components = []discordgo.MessageComponent{
+		discordgo.ActionsRow{
+			Components: []discordgo.MessageComponent{
+				discordgo.Button{
+					Label: "Support Server",
+					Style: discordgo.LinkButton,
+					Emoji: discordgo.ComponentEmoji{
+						Name:     "logo",
+						ID:       "889025400120950804",
+						Animated: false,
 					},
+					URL: "https://discord.gg/RxP2z5NGtj",
 				},
 			},
-		}
-		_, err = s.ChannelMessageEditComplex(message)
-		if err != nil {
-			fmt.Println(err)
-		}
-	}*/
+		},
+	}
+	_, err = u.SuccessMessageEdit(s, *auction.Event.ChannelID, *auction.Event.MessageID, &message)
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	//TODO Add functionality for channel lock again
 	/* 	if auction != true {

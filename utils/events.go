@@ -1,11 +1,10 @@
-package events
+package utils
 
 import (
 	"fmt"
 	"time"
 
 	"github.com/Logan9312/Prize-Bot-V2/database"
-	u "github.com/Logan9312/Prize-Bot-V2/utils"
 	"github.com/bwmarrin/discordgo"
 )
 
@@ -18,43 +17,43 @@ func NewEvent(botID string, i *discordgo.InteractionCreate, options map[string]a
 	}
 
 	if options["duration"] != nil {
-		duration, err := u.ParseTime(options["duration"].(string))
+		duration, err := ParseTime(options["duration"].(string))
 		if err != nil {
 			return database.Event{}, fmt.Errorf("error parsing time input: %w", err)
 		}
-		eventData.EndTime = u.Ptr(time.Now().Add(duration))
+		eventData.EndTime = Ptr(time.Now().Add(duration))
 	}
 
 	if options["image"] != nil {
-		eventData.ImageURL = u.ImageToURL(i, options["image"].(string))
+		eventData.ImageURL = ImageToURL(i, options["image"].(string))
 	}
 
-	duration, err := u.ParseTime(options["duration"].(string))
+	duration, err := ParseTime(options["duration"].(string))
 	if err != nil {
 		return eventData, fmt.Errorf("error parsing time input: %w", err)
 	}
 
 	if options["schedule"] != nil {
-		startTimeDuration, err := u.ParseTime(options["schedule"].(string))
+		startTimeDuration, err := ParseTime(options["schedule"].(string))
 		if err != nil {
 			return eventData, fmt.Errorf("error parsing time input: %w", err)
 		}
-		eventData.StartTime = u.Ptr(time.Now().Add(startTimeDuration))
-		eventData.EndTime = u.Ptr(eventData.StartTime.Add(duration))
+		eventData.StartTime = Ptr(time.Now().Add(startTimeDuration))
+		eventData.EndTime = Ptr(eventData.StartTime.Add(duration))
 	} else {
-		eventData.EndTime = u.Ptr(time.Now().Add(duration))
+		eventData.EndTime = Ptr(time.Now().Add(duration))
 	}
 
 	if options["image"] != nil {
-		eventData.ImageURL = u.ImageToURL(i, options["image"].(string))
+		eventData.ImageURL = ImageToURL(i, options["image"].(string))
 	}
 
 	if options["description"] != nil {
-		eventData.Description = u.Ptr(options["description"].(string))
+		eventData.Description = Ptr(options["description"].(string))
 	}
 
 	if options["note"] != nil {
-		eventData.Note = u.Ptr(options["note"].(string))
+		eventData.Note = Ptr(options["note"].(string))
 	}
 
 	return eventData, nil

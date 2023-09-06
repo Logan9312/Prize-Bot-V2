@@ -15,6 +15,18 @@ type WhiteLabels struct {
 	BotToken string
 }
 
+// ClaimSetup From Make sure to remove LogChannel and ClaimMessage from auction log
+type ClaimSetup struct {
+	GuildID         string `gorm:"primaryKey"`
+	Category        *string
+	StaffRole       *string
+	Instructions    *string
+	LogChannel      *string
+	Expiration      *time.Time
+	DisableClaiming bool
+	ChannelPrefix   *string
+}
+
 type AuctionSetup struct {
 	GuildID         string `gorm:"primaryKey"`
 	Category        *string
@@ -82,17 +94,7 @@ type AuctionQueue struct {
 	ChannelPrefix   string
 }
 
-// ClaimSetup FromMake sure to remove LogChannel and ClaimMessage from auction log
-type ClaimSetup struct {
-	GuildID         string `gorm:"primaryKey"`
-	Category        string
-	StaffRole       string
-	Instructions    string
-	LogChannel      string
-	Expiration      string
-	DisableClaiming bool
-	ChannelPrefix   string
-}
+
 
 type Claim struct {
 	MessageID   string `gorm:"primaryKey"`

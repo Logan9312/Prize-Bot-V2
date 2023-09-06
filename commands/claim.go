@@ -1,6 +1,9 @@
 package commands
 
 import (
+	"fmt"
+
+	"github.com/Logan9312/Prize-Bot-V2/database"
 	u "github.com/Logan9312/Prize-Bot-V2/utils"
 	"github.com/bwmarrin/discordgo"
 )
@@ -40,7 +43,26 @@ var ClaimCommand = discordgo.ApplicationCommand{
 	DefaultMemberPermissions: u.Ptr(int64(discordgo.PermissionManageServer)),
 }
 
-func ClaimOutput() {
+func ClaimOutput(s *discordgo.Session, event database.Event) error {
+
+	claimSettings, err := database.GetClaimSettings(event.GuildID)
+	if err != nil {
+		return err
+	}
+
+	message, err := u.SuccessMessage(s, *claimSettings.LogChannel, &discordgo.MessageSend{
+		Content: mentionUser,
+		Title:   fmt.Sprintf("%s Prize: __**%s**__", eventType, claimMap["item"]),
+		Fields:  fields,
+		/*Thumbnail: &discordgo.MessageEmbedThumbnail{
+			URL: claimMap["image_url"].(string),
+		},*/
+		Image: &discordgo.MessageEmbedImage{
+			URL: "https://i.imgur.com/9wo7diC.png",
+		},
+		Components: components,
+	})
+
 	//TODO Move this to claim output
 	/* 	if auction.TargetPrice != nil && *auction.TargetPrice > auction.Bid {
 
