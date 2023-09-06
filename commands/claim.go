@@ -50,18 +50,52 @@ func ClaimOutput(s *discordgo.Session, event database.Event) error {
 		return err
 	}
 
-	message, err := u.SuccessMessage(s, *claimSettings.LogChannel, &discordgo.MessageSend{
-		Content: mentionUser,
-		Title:   fmt.Sprintf("%s Prize: __**%s**__", eventType, claimMap["item"]),
-		Fields:  fields,
-		/*Thumbnail: &discordgo.MessageEmbedThumbnail{
-			URL: claimMap["image_url"].(string),
-		},*/
-		Image: &discordgo.MessageEmbedImage{
-			URL: "https://i.imgur.com/9wo7diC.png",
+	claimMessage := &discordgo.MessageSend{
+		Content: fmt.Sprintf("<@%s>", event.WinnerID),
+		Embeds: []*discordgo.MessageEmbed{
+			{
+				Title:  fmt.Sprintf("Prize: __**%s**__", event.Item),
+				Fields: fields,
+				/*Thumbnail: &discordgo.MessageEmbedThumbnail{
+					URL: claimMap["image_url"].(string),
+				},*/
+				Image: &discordgo.MessageEmbedImage{
+					URL: "https://i.imgur.com/9wo7diC.png",
+				},
+			},
 		},
-		Components: components,
-	})
+		Components: []discordgo.MessageComponent{
+			discordgo.ActionsRow{
+				Components: []discordgo.MessageComponent{},
+			},
+		},
+	}
+
+	/* 	if claim != nil {
+	   		buttons = append(buttons, discordgo.Button{
+	   			Label: "Bids",
+	   			Style: 2,
+	   			Emoji: discordgo.ComponentEmoji{
+	   				Name: "📜",
+	   			},
+	   			CustomID: "bid_history",
+	   		})
+	   	}
+	*/
+
+	if !claimSettings.DisableClaiming {
+		buttons = append(claimMessage.Components, discordgo.Button{
+			Label: "Claim!",
+			Style: 3,
+			Emoji: discordgo.ComponentEmoji{
+				Name: "cryopod",
+				ID:   "889307390690885692",
+			},
+			CustomID: "claim_prize:" + claimMap["winner"].(string),
+		})
+	}
+
+	message, err := u.SuccessMessage(s, *claimSettings.LogChannel, claimMessage)
 
 	//TODO Move this to claim output
 	/* 	if auction.TargetPrice != nil && *auction.TargetPrice > auction.Bid {

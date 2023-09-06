@@ -52,7 +52,6 @@ type Auction struct {
 	Currency       *Currency
 	CurrencyID     uint
 	Bid            float64
-	WinnerID       *string
 	IncrementMin   *float64
 	IncrementMax   *float64
 	TargetPrice    *float64
@@ -93,8 +92,6 @@ type AuctionQueue struct {
 	UseCurrency     bool
 	ChannelPrefix   string
 }
-
-
 
 type Claim struct {
 	MessageID   string `gorm:"primaryKey"`
@@ -175,6 +172,7 @@ type Event struct {
 	Item        string
 	ChannelID   *string
 	MessageID   *string
+	WinnerID    *string
 	StartTime   *time.Time
 	EndTime     *time.Time
 	ImageURL    *string

@@ -309,7 +309,7 @@ func AuctionMessageFormat(data database.Auction) discordgo.MessageSend {
 	}
 
 	fieldName := "__**Starting Bid:**__"
-	if data.WinnerID != nil {
+	if data.Event.WinnerID != nil {
 		fieldName = "__**Current Highest Bid:**__"
 	}
 
@@ -319,10 +319,10 @@ func AuctionMessageFormat(data database.Auction) discordgo.MessageSend {
 		Inline: true,
 	})
 
-	if data.WinnerID != nil {
+	if data.Event.WinnerID != nil {
 		message.Embeds[0].Fields = append(message.Embeds[0].Fields, &discordgo.MessageEmbedField{
 			Name:   "__**Current Winner**__",
-			Value:  fmt.Sprintf("<@%s>", *data.WinnerID),
+			Value:  fmt.Sprintf("<@%s>", *data.Event.WinnerID),
 			Inline: true,
 		})
 	}
@@ -418,7 +418,7 @@ func AuctionBid(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 	}
 
 	// When there is no winning bid
-	if bid == auction.Bid && auction.WinnerID != nil {
+	if bid == auction.Bid && auction.Event.WinnerID != nil {
 		return fmt.Errorf("You must bid higher than: " + u.PriceFormat(auction.Bid, auction.Event.GuildID, auction.Currency))
 	}
 
@@ -426,7 +426,7 @@ func AuctionBid(s *discordgo.Session, i *discordgo.InteractionCreate) error {
 	if auction.Buyout == nil || bid < *auction.Buyout {
 
 		//Checking if the auction is capped and the current winner is bidding.
-		if (auction.WinnerID != nil) && (auction.IncrementMax != nil) && (i.Member.User.ID == *auction.WinnerID) {
+		if (auction.Event.WinnerID != nil) && (auction.IncrementMax != nil) && (i.Member.User.ID == *auction.Event.WinnerID) {
 			return fmt.Errorf("cannot out bid yourself on a capped bid auction")
 		}
 
