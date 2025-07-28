@@ -1,19 +1,26 @@
 package main
 
 import (
-	"fmt"
 	"log"
+	"os"
 
 	"github.com/Logan9312/Prize-Bot-V2/routers"
 	"github.com/gofiber/fiber/v2"
 )
 
 func main() {
-	fmt.Println("Bot is running!")
 
 	app := fiber.New()
 
 	routers.HealthCheck(app)
 
-	log.Fatal(app.Listen("0.0.0.0:3000"))
+	// Get port from environment or default to 3000
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "3000"
+	}
+
+	// Start server - Listen on IPv6 (::) for Railway private networking
+	// Railway requires IPv6 for private networking
+	log.Fatal(app.Listen("[::]:" + port))
 }

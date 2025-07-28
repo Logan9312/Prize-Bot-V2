@@ -13,6 +13,6 @@ RUN apk add --no-cache ca-certificates
 
 COPY --from=build /app/main /main
 
-EXPOSE 3000
+EXPOSE $PORT
 
 CMD ["/main"]
