@@ -1,10 +1,11 @@
 package routers
 
 import (
-	"log"
 	"os"
 
+	"github.com/Logan9312/Prize-Bot-V2/logger"
 	"github.com/gofiber/fiber/v2"
+	"go.uber.org/zap"
 )
 
 func StartApp() {
@@ -18,5 +19,8 @@ func StartApp() {
 		port = "3000"
 	}
 
-	log.Fatal(app.Listen("[::]:" + port))
+	logger.Logger.Info("Starting web server", zap.String("port", port))
+	if err := app.Listen("[::]:" + port); err != nil {
+		logger.Logger.Fatal("Failed to start web server", zap.Error(err))
+	}
 }
