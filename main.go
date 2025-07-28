@@ -20,7 +20,5 @@ func main() {
 		port = "3000"
 	}
 
-	// Start server - Listen on IPv6 (::) for Railway private networking
-	// Railway requires IPv6 for private networking
 	log.Fatal(app.Listen("[::]:" + port))
 }
