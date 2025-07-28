@@ -1,26 +1,16 @@
-FROM golang:1.19-alpine AS build_base
+FROM golang:1.24-alpine AS build
 
-RUN apk add --no-cache git
-RUN apk add build-base
+WORKDIR /app
 
-# Set the Current Working Directory inside the container
-WORKDIR /tmp/app
-
-# We want to populate the module cache based on the go.{mod,sum} files.
-COPY go.mod .
-COPY go.sum .
-
+COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
+RUN go build -o main .
 
-# Build the Go app
-RUN go build -o ./main .
+FROM alpine:latest
+RUN apk add --no-cache ca-certificates
 
-FROM alpine:3.15
-RUN apk add ca-certificates
+COPY --from=build /app/main /main
 
-COPY --from=build_base /tmp/app/main /main
-
-# Run the startup script
 CMD ["/main"]
