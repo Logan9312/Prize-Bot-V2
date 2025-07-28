@@ -4,7 +4,9 @@
       "Bash(go mod:*)",
       "Bash(go list:*)",
       "Bash(go get:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "WebFetch(domain:docs.railway.com)",
+      "Bash(curl:*)"
     ],
     "deny": []
   }
